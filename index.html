@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشترياتي - نظام متكامل للبيع والشراء</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 80px auto 0;
+            padding: 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            color: #667eea;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .product-details {
+            background: #f8f9fa;
+            padding: 0.8rem;
+            border-radius: 10px;
+            margin: 0.8rem 0;
+            font-size: 0.9rem;
+        }
+
+        .detail-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+
+        .price-range-low { background: #28a745; color: white; }
+        .price-range-medium { background: #ffc107; color: #333; }
+        .price-range-high { background: #dc3545; color: white; }
+
+        .target-gender { background: #17a2b8; color: white; }
+        .target-age { background: #6f42c1; color: white; }
+        .warning { background: #ff4757; color: white; }
+
+        .add-to-cart {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .add-to-cart:hover {
+            transform: scale(1.05);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            float: left;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .cart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .cart-item-info {
+            flex: 2;
+        }
+
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quantity-btn {
+            background: #f0f0f0;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .remove-item {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .cart-total {
+            text-align: left;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .payment-option {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-option:hover,
+        .payment-option.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: scale(1.05);
+        }
+
+        .payment-check {
+            color: #28a745;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+
+        .paypal-link {
+            display: inline-block;
+            background: #0070ba;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .paypal-link:hover {
+            background: #003087;
+            transform: scale(1.02);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+        .notification.error { background: linear-gradient(135deg, #dc3545 0%, #ff4757 100%); }
+        .notification.info { background: linear-gradient(135deg, #17a2b8 0%, #00bcd4 100%); }
+        .notification.warning { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .order-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: white;
+        }
+
+        .order-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-pending { background: #ffc107; color: #333; }
+        .status-paid-pending { background: #17a2b8; color: white; }
+        .status-approved { background: #28a745; color: white; }
+        .status-rejected { background: #dc3545; color: white; }
+        .status-shipped { background: #17a2b8; color: white; }
+        .status-delivered { background: #28a745; color: white; }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .approve-btn { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; }
+        .reject-btn { background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; }
+        .ship-btn { background: #17a2b8; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; }
+        .deliver-btn { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .edit-btn, .delete-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .edit-btn { background: #ffc107; color: #333; }
+        .delete-btn { background: #dc3545; color: white; }
+
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+
+        .empty-products {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 20px;
+            margin: 2rem 0;
+        }
+
+        .empty-products h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 1rem; }
+            .products-grid { grid-template-columns: 1fr; }
+            .cart-item { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <nav class="navbar">
+            <div class="logo" onclick="showPage('home')">مشترياتي 🛒</div>
+            <div class="nav-links">
+                <a onclick="showPage('home')">الرئيسية</a>
+                <a onclick="showPage('products')">المنتجات</a>
+                <a onclick="showPage('dashboard')">طلباتي</a>
+                <div class="cart-icon" onclick="showPage('cart')">
+                    🛒
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+                <a id="adminPanelLink" onclick="showAdminPanel()" style="display:none;">👑 لوحة المدير</a>
+                <a id="authLink" onclick="showAuthModal()">دخول / تسجيل</a>
+                <a id="logoutLink" onclick="logout()" style="display:none;">تسجيل خروج</a>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <div id="homePage">
+            <div class="hero">
+                <h1>مرحباً بك في مشترياتي</h1>
+                <p>تسوق بأمان واستمتع بأفضل العروض</p>
+                <button class="btn" onclick="showPage('products')" style="width:auto;margin-top:1rem;">تسوق الآن</button>
+            </div>
+            <div class="products-grid" id="featuredProducts"></div>
+        </div>
+
+        <div id="productsPage" style="display:none;">
+            <div class="hero">
+                <h1>جميع المنتجات</h1>
+                <p>اكتشف تشكيلتنا المتنوعة</p>
+            </div>
+            <div class="products-grid" id="allProducts"></div>
+        </div>
+
+        <div id="cartPage" style="display:none;">
+            <div class="hero">
+                <h1>سلة المشتريات</h1>
+                <p>راجع منتجاتك قبل الشراء</p>
+            </div>
+            <div id="cartContainer"></div>
+        </div>
+
+        <div id="checkoutPage" style="display:none;">
+            <div class="hero">
+                <h1>إتمام الدفع</h1>
+                <p>الرجاء إدخال معلومات الشحن واختيار طريقة الدفع</p>
+            </div>
+            <div class="cart-container">
+                <h3>معلومات الشحن</h3>
+                <div class="form-group">
+                    <label>📍 العنوان بالكامل</label>
+                    <textarea id="shippingAddress" rows="2" placeholder="العنوان بالتفصيل - رقم المنزل - الشارع - المدينة"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📞 رقم الهاتف</label>
+                    <input type="tel" id="phoneNumber" placeholder="01xxxxxxxxx">
+                </div>
+                <div class="form-group">
+                    <label>📍 أقرب معلم</label>
+                    <input type="text" id="landmark" placeholder="أقرب معلم للمنزل (مسجد - مدرسة - محطة)">
+                </div>
+                
+                <h3>طرق الدفع المتاحة</h3>
+                <div class="payment-methods">
+                    <div class="payment-option" onclick="selectPayment('paypal', this)">
+                        <input type="radio" name="payment_method" value="paypal" id="paypal">
+                        <label for="paypal">💳 باي بال (PayPal)</label>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('cod', this)">
+                        <input type="radio" name="payment_method" value="cod" id="cod">
+                        <label for="cod">💰 دفع عند الاستلام</label>
+                    </div>
+                </div>
+                
+                <div id="paypalDetails" style="display:none;" class="form-group">
+                    <label>👤 اسم المستخدم على باي بال (PayPal Username)</label>
+                    <input type="text" id="paypalUsername" placeholder="أدخل اسم المستخدم الخاص بك على PayPal">
+                    <div style="margin-top: 15px; text-align: center;">
+                        <p>للدفع عبر PayPal، اضغط على الرابط التالي:</p>
+                        <a href="https://paypal.me/aymankorkor?country.x=EG&locale.x=en_US" target="_blank" class="paypal-link" onclick="markPaypalPayment()">💰 اضغط هنا للدفع عبر PayPal</a>
+                    </div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <button class="btn" onclick="confirmPaypalPayment()" style="background:#28a745;">✅ أؤكد أنني قمت بالدفع عبر PayPal</button>
+                    </div>
+                </div>
+                
+                <div id="checkoutSummary"></div>
+                <button class="btn" onclick="submitOrder()">تقديم الطلب</button>
+            </div>
+        </div>
+
+        <div id="dashboardPage" style="display:none;">
+            <div class="hero">
+                <h1>طلباتي</h1>
+                <p>مرحباً بعودتك</p>
+            </div>
+            <div class="cart-container" id="dashboardContent"></div>
+        </div>
+
+        <div id="adminPage" style="display:none;">
+            <div class="hero">
+                <h1>👑 لوحة تحكم المدير</h1>
+                <p>إدارة كاملة للموقع</p>
+                <button class="btn" onclick="showAddProductModal()" style="width:auto;margin:0.5rem;">➕ إضافة منتج جديد</button>
+                <button class="btn" onclick="showManageUsersModal()" style="width:auto;margin:0.5rem;">👥 إدارة المستخدمين</button>
+            </div>
+            
+            <div class="stats-grid" id="adminStats"></div>
+            
+            <div class="cart-container">
+                <h3>📦 إدارة المنتجات</h3>
+                <div id="adminProductsList"></div>
+            </div>
+            
+            <div class="cart-container" style="margin-top:2rem;">
+                <h3>📋 طلبات الشراء (قيد المراجعة)</h3>
+                <div id="pendingOrdersList"></div>
+            </div>
+            
+            <div class="cart-container" style="margin-top:2rem;">
+                <h3>✅ الطلبات المكتملة والمقبولة</h3>
+                <div id="completedOrdersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال تسجيل الدخول -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+            <div id="loginFormDiv">
+                <h2>تسجيل الدخول</h2>
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="loginEmail" placeholder="example@email.com">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="loginPassword" placeholder="********">
+                </div>
+                <button class="btn" onclick="login()">دخول</button>
+                <p style="margin-top:1rem;text-align:center;">ليس لديك حساب؟ <a onclick="showRegisterForm()">سجل الآن</a></p>
+            </div>
+            <div id="registerFormDiv" style="display:none;">
+                <h2>إنشاء حساب</h2>
+                <div class="form-group">
+                    <label>الاسم الكامل</label>
+                    <input type="text" id="regName">
+                </div>
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="regEmail">
+                </div>
+                <div class="form-group">
+                    <label>رقم الهاتف</label>
+                    <input type="tel" id="regPhone">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="regPassword">
+                </div>
+                <button class="btn" onclick="register()">تسجيل</button>
+                <p style="margin-top:1rem;text-align:center;">لديك حساب؟ <a onclick="showLoginForm()">سجل دخول</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال إضافة/تعديل منتج -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProductModal()">&times;</span>
+            <h2 id="productModalTitle">إضافة منتج جديد</h2>
+            <div class="form-group">
+                <label>اسم المنتج</label>
+                <input type="text" id="productName">
+            </div>
+            <div class="form-group">
+                <label>الوصف</label>
+                <textarea id="productDescription" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>السعر (ج.م)</label>
+                <input type="number" id="productPrice">
+            </div>
+            <div class="form-group">
+                <label>الكمية المتاحة</label>
+                <input type="number" id="productStock">
+            </div>
+            <div class="form-group">
+                <label>الفئة السعرية</label>
+                <select id="priceRange">
+                    <option value="low">رخيص (أقل من 500 ج.م)</option>
+                    <option value="medium">وسط (500 - 2000 ج.م)</option>
+                    <option value="high">غالي (أكثر من 2000 ج.م)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>النوع</label>
+                <select id="productType">
+                    <option value="electronics">إلكترونيات</option>
+                    <option value="fashion">أزياء</option>
+                    <option value="books">كتب</option>
+                    <option value="accessories">إكسسوارات</option>
+                    <option value="food">أطعمة</option>
+                    <option value="other">أخرى</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>الفئة الموجه لها</label>
+                <select id="targetGroup">
+                    <option value="all">الجميع</option>
+                    <option value="kids">أطفال</option>
+                    <option value="boys">شباب</option>
+                    <option value="girls">بنات</option>
+                    <option value="women">سيدات</option>
+                    <option value="men">رجال</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>العمر المناسب</label>
+                <select id="ageRange">
+                    <option value="under3">أقل من 3 سنوات</option>
+                    <option value="3plus">3 سنوات فأكثر</option>
+                    <option value="10plus">10 سنوات فأكثر</option>
+                    <option value="18plus">18 سنة فأكثر</option>
+                    <option value="all">جميع الأعمار</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>تحذيرات</label>
+                <textarea id="warnings" rows="2" placeholder="مثال: يحتوي على مكسرات - غير مناسب للأطفال تحت 3 سنوات - قد يسبب حساسية..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>صورة المنتج</label>
+                <input type="file" id="productImageFile" accept="image/*" onchange="previewImage(event)">
+                <div id="imagePreviewContainer"></div>
+            </div>
+            <button class="btn" onclick="saveProduct()">حفظ المنتج</button>
+        </div>
+    </div>
+
+    <!-- مودال إدارة المستخدمين -->
+    <div id="usersModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUsersModal()">&times;</span>
+            <h2>👥 إدارة المستخدمين</h2>
+            <div id="usersList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== البيانات الأساسية ====================
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+        
+        // IMPORTANT: حذف المنتجات الافتراضية القديمة نهائياً
+        // لو في منتجات ids من 1 لـ 6 (المنتجات الافتراضية القديمة) يتم مسحها
+        if (products.length > 0 && products.some(p => p.id >= 1 && p.id <= 6)) {
+            // نمسح المنتجات القديمة ونجدد localStorage
+            products = [];
+            localStorage.removeItem('products');
+            console.log('✅ تم مسح المنتجات الافتراضية القديمة بنجاح');
+        }
+        
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let editingProductId = null;
+        let selectedPayment = null;
+        let currentImageData = null;
+        let paypalConfirmed = false;
+
+        // تم إزالة المنتجات الافتراضية بالكامل - لن يظهر أي منتج إلا بعد إضافته بواسطة المدير
+
+        function saveProductsToStorage() { localStorage.setItem('products', JSON.stringify(products)); }
+        function isAdmin() { return currentUser && currentUser.isAdmin === true; }
+
+        function initializeAdmin() {
+            const adminExists = users.find(u => u.email === 'admin@mashryati.com');
+            if (!adminExists) {
+                users.push({ id: 999, name: "المدير العام", email: "admin@mashryati.com", phone: "01000000000", password: "admin123", isAdmin: true, isSuperAdmin: true });
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+        }
+
+        function getPriceRangeText(priceRange) { const map = { low: 'رخيص', medium: 'متوسط', high: 'غالي' }; return map[priceRange] || 'غير محدد'; }
+        function getPriceRangeClass(priceRange) { const map = { low: 'price-range-low', medium: 'price-range-medium', high: 'price-range-high' }; return map[priceRange] || ''; }
+        function getTargetGroupText(target) { const map = { all: 'الجميع', kids: 'أطفال', boys: 'شباب', girls: 'بنات', women: 'سيدات', men: 'رجال' }; return map[target] || 'الجميع'; }
+        function getAgeRangeText(age) { const map = { under3: 'أقل من 3 سنوات', '3plus': '3 سنوات فأكثر', '10plus': '10 سنوات فأكثر', '18plus': '18 سنة فأكثر', all: 'جميع الأعمار' }; return map[age] || 'جميع الأعمار'; }
+        function getProductTypeText(type) { const map = { electronics: 'إلكترونيات', fashion: 'أزياء', books: 'كتب', accessories: 'إكسسوارات', food: 'أطعمة', other: 'أخرى' }; return map[type] || 'أخرى'; }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { currentImageData = e.target.result; document.getElementById('imagePreviewContainer').innerHTML = `<img src="${currentImageData}" class="image-preview">`; };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function getProductImage(product) {
+            if (product.imageData) return `<img src="${product.imageData}" alt="${product.name}">`;
+            return `<div style="display:flex;align-items:center;justify-content:center;font-size:3rem;">📦</div>`;
+        }
+
+        function displayProducts(productsToShow, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (productsToShow.length === 0) { 
+                container.innerHTML = `<div class="empty-products">
+                    <h3>📭 لا توجد منتجات حالياً</h3>
+                    <p>سيتم إضافة المنتجات قريباً</p>
+                    ${isAdmin() ? '<button class="btn" onclick="showAddProductModal()" style="width:auto;margin-top:1rem;">➕ أضف منتج جديد</button>' : ''}
+                </div>`; 
+                return; 
+            }
+            container.innerHTML = '<div class="products-grid">' + productsToShow.map(product => `
+                <div class="product-card">
+                    <div class="product-image">${getProductImage(product)}</div>
+                    <div class="product-info">
+                        <h3 class="product-title">${product.name}</h3>
+                        <p class="product-description">${product.description}</p>
+                        <div class="product-price">${product.price.toLocaleString()} ج.م</div>
+                        <div class="product-details">
+                            <span class="detail-badge ${getPriceRangeClass(product.priceRange)}">💰 ${getPriceRangeText(product.priceRange)}</span>
+                            <span class="detail-badge target-gender">👥 ${getTargetGroupText(product.targetGroup)}</span>
+                            <span class="detail-badge target-age">📅 ${getAgeRangeText(product.ageRange)}</span>
+                            <span class="detail-badge">🏷️ ${getProductTypeText(product.productType)}</span>
+                            ${product.warnings ? `<div class="detail-badge warning" style="display:block;margin-top:5px;">⚠️ تحذير: ${product.warnings}</div>` : ''}
+                        </div>
+                        <div>✅ متوفر: ${product.stock}</div>
+                        <button class="add-to-cart" onclick="addToCart(${product.id}, '${product.name}', ${product.price})">🛒 أضف للسلة</button>
+                    </div>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        function displayAdminProducts() {
+            const container = document.getElementById('adminProductsList');
+            if (!container) return;
+            if (products.length === 0) { 
+                container.innerHTML = `<div class="empty-products" style="padding:2rem;text-align:center;">
+                    <p>📭 لا توجد منتجات</p>
+                    <button class="btn" onclick="showAddProductModal()" style="width:auto;margin-top:1rem;">➕ أضف أول منتج</button>
+                </div>`; 
+                return; 
+            }
+            container.innerHTML = '<div class="products-grid">' + products.map(product => `
+                <div class="product-card">
+                    <div class="product-image">${getProductImage(product)}</div>
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        <div class="product-price">${product.price.toLocaleString()} ج.م</div>
+                        <div>📦 المخزون: ${product.stock}</div>
+                        <div class="product-actions">
+                            <button class="edit-btn" onclick="editProduct(${product.id})">✏️ تعديل</button>
+                            <button class="delete-btn" onclick="deleteProduct(${product.id})">🗑️ حذف</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        function showAddProductModal() {
+            if (!isAdmin()) return;
+            editingProductId = null;
+            currentImageData = null;
+            document.getElementById('productModalTitle').innerText = 'إضافة منتج جديد';
+            document.getElementById('productName').value = '';
+            document.getElementById('productDescription').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productStock').value = '';
+            document.getElementById('priceRange').value = 'medium';
+            document.getElementById('productType').value = 'other';
+            document.getElementById('targetGroup').value = 'all';
+            document.getElementById('ageRange').value = 'all';
+            document.getElementById('warnings').value = '';
+            document.getElementById('productImageFile').value = '';
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+            document.getElementById('productModal').style.display = 'flex';
+        }
+
+        function editProduct(id) {
+            if (!isAdmin()) return;
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            editingProductId = id;
+            currentImageData = product.imageData || null;
+            document.getElementById('productModalTitle').innerText = 'تعديل المنتج';
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productDescription').value = product.description;
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productStock').value = product.stock;
+            document.getElementById('priceRange').value = product.priceRange || 'medium';
+            document.getElementById('productType').value = product.productType || 'other';
+            document.getElementById('targetGroup').value = product.targetGroup || 'all';
+            document.getElementById('ageRange').value = product.ageRange || 'all';
+            document.getElementById('warnings').value = product.warnings || '';
+            if (currentImageData) document.getElementById('imagePreviewContainer').innerHTML = `<img src="${currentImageData}" class="image-preview">`;
+            else document.getElementById('imagePreviewContainer').innerHTML = '';
+            document.getElementById('productModal').style.display = 'flex';
+        }
+
+        function saveProduct() {
+            if (!isAdmin()) return;
+            const productData = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                stock: parseInt(document.getElementById('productStock').value),
+                priceRange: document.getElementById('priceRange').value,
+                productType: document.getElementById('productType').value,
+                targetGroup: document.getElementById('targetGroup').value,
+                ageRange: document.getElementById('ageRange').value,
+                warnings: document.getElementById('warnings').value,
+                imageData: currentImageData || null
+            };
+            if (!productData.name || !productData.price) { showNotification('الرجاء إدخال اسم المنتج والسعر', 'error'); return; }
+            if (editingProductId) {
+                const index = products.findIndex(p => p.id === editingProductId);
+                if (index !== -1) { products[index] = { ...products[index], ...productData }; showNotification('تم تعديل المنتج', 'success'); }
+            } else {
+                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                products.push({ id: newId, ...productData }); showNotification('تم إضافة المنتج', 'success');
+            }
+            saveProductsToStorage();
+            closeProductModal();
+            if (isAdmin()) { displayAdminProducts(); displayAdminStats(); }
+            displayProducts(products, 'allProducts');
+            displayProducts(products.slice(0, 4), 'featuredProducts');
+        }
+
+        function deleteProduct(id) {
+            if (!isAdmin()) return;
+            if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+                products = products.filter(p => p.id !== id);
+                saveProductsToStorage();
+                if (isAdmin()) { displayAdminProducts(); displayAdminStats(); }
+                displayProducts(products, 'allProducts');
+                displayProducts(products.slice(0, 4), 'featuredProducts');
+                showNotification('تم حذف المنتج', 'info');
+            }
+        }
+
+        function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
+
+        function makeUserAdmin(userId) {
+            const user = users.find(u => u.id === userId);
+            if (user && !user.isSuperAdmin) { user.isAdmin = true; localStorage.setItem('users', JSON.stringify(users)); if (currentUser && currentUser.id === userId) { currentUser.isAdmin = true; localStorage.setItem('currentUser', JSON.stringify(currentUser)); updateUIForAdmin(); } showNotification(`تم جعل ${user.name} مديراً`, 'success'); if (document.getElementById('usersList')) displayUsersList(); }
+        }
+
+        function removeUserAdmin(userId) {
+            const user = users.find(u => u.id === userId);
+            if (user && !user.isSuperAdmin) { user.isAdmin = false; localStorage.setItem('users', JSON.stringify(users)); if (currentUser && currentUser.id === userId) { currentUser.isAdmin = false; localStorage.setItem('currentUser', JSON.stringify(currentUser)); updateUIForAdmin(); } showNotification(`تم إزالة صلاحيات المدير`, 'info'); if (document.getElementById('usersList')) displayUsersList(); }
+        }
+
+        function showManageUsersModal() { if (!isAdmin()) return; document.getElementById('usersModal').style.display = 'flex'; displayUsersList(); }
+
+        function displayUsersList() {
+            const container = document.getElementById('usersList');
+            if (!container) return;
+            container.innerHTML = users.map(user => `<div style="border:1px solid #e0e0e0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+                <div><strong>${user.name}</strong></div><div>📧 ${user.email}</div><div>📞 ${user.phone}</div>
+                <div>${user.isAdmin ? '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;">👑 مدير</span>' : '<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;">👤 مستخدم</span>'}${user.isSuperAdmin ? '<span style="background:#ff4757;color:white;padding:2px 8px;border-radius:10px;margin-right:5px;">⭐ مدير أساسي</span>' : ''}</div>
+                <div style="margin-top:1rem;">${!user.isSuperAdmin ? (user.isAdmin ? `<button class="btn" onclick="removeUserAdmin(${user.id})" style="background:#dc3545;width:auto;padding:5px 15px;">❌ إزالة الصلاحيات</button>` : `<button class="btn" onclick="makeUserAdmin(${user.id})" style="background:#28a745;width:auto;padding:5px 15px;">👑 جعل مديراً</button>`) : ''}</div>
+            </div>`).join('');
+        }
+
+        function closeUsersModal() { document.getElementById('usersModal').style.display = 'none'; }
+        function updateUIForAdmin() { const adminLink = document.getElementById('adminPanelLink'); if (adminLink) adminLink.style.display = isAdmin() ? 'inline' : 'none'; }
+
+        function approveOrder(orderId) { 
+            const order = orders.find(o => o.id === orderId); 
+            if (order && (order.status === 'pending' || order.status === 'paid_pending')) { 
+                order.status = 'approved'; 
+                order.adminNote = `تم قبول الطلب في ${new Date().toLocaleString('ar-EG')}`; 
+                localStorage.setItem('orders', JSON.stringify(orders)); 
+                showNotification(`✅ تم قبول الطلب #${orderId}`, 'success'); 
+                if (isAdmin()) { displayPendingOrders(); displayCompletedOrders(); displayAdminStats(); } 
+            } 
+        }
+        
+        function rejectOrder(orderId) { 
+            const order = orders.find(o => o.id === orderId); 
+            if (order && (order.status === 'pending' || order.status === 'paid_pending')) { 
+                const reason = prompt('الرجاء إدخال سبب الرفض:'); 
+                if (reason) { 
+                    order.status = 'rejected'; 
+                    order.adminNote = `تم رفض الطلب: ${reason} - ${new Date().toLocaleString('ar-EG')}`; 
+                    localStorage.setItem('orders', JSON.stringify(orders)); 
+                    order.items.forEach(item => { const product = products.find(p => p.id === item.id); if (product) product.stock += item.quantity; }); 
+                    saveProductsToStorage(); 
+                    showNotification(`❌ تم رفض الطلب #${orderId}`, 'warning'); 
+                    if (isAdmin()) { displayPendingOrders(); displayCompletedOrders(); displayAdminStats(); displayAdminProducts(); } 
+                } 
+            } 
+        }
+        
+        function markAsShipped(orderId) { 
+            const order = orders.find(o => o.id === orderId); 
+            if (order && order.status === 'approved') { 
+                order.status = 'shipped'; 
+                order.shippingNote = `تم شحن الطلب في ${new Date().toLocaleString('ar-EG')}`; 
+                localStorage.setItem('orders', JSON.stringify(orders)); 
+                showNotification(`🚚 تم شحن الطلب #${orderId}`, 'success'); 
+                if (isAdmin()) { displayPendingOrders(); displayCompletedOrders(); displayAdminStats(); } 
+            } 
+        }
+        
+        function markAsDelivered(orderId) { 
+            const order = orders.find(o => o.id === orderId); 
+            if (order && order.status === 'shipped') { 
+                order.status = 'delivered'; 
+                order.deliveryNote = `تم توصيل الطلب في ${new Date().toLocaleString('ar-EG')}`; 
+                localStorage.setItem('orders', JSON.stringify(orders)); 
+                showNotification(`✅ تم تأكيد وصول المنتج للطلب #${orderId}`, 'success'); 
+                if (isAdmin()) { displayPendingOrders(); displayCompletedOrders(); displayAdminStats(); } 
+            } 
+        }
+
+        function confirmPaypalPayment() {
+            const paypalUsername = document.getElementById('paypalUsername').value;
+            if (!paypalUsername) {
+                showNotification('الرجاء إدخال اسم المستخدم على PayPal', 'error');
+                return false;
+            }
+            paypalConfirmed = true;
+            showNotification('✅ تم تأكيد الدفع عبر PayPal بنجاح! الطلب الآن "تم الدفع - قيد المراجعة"', 'success');
+            return true;
+        }
+
+        function markPaypalPayment() {
+            setTimeout(() => {
+                showNotification('تم فتح رابط PayPal 💳', 'info');
+            }, 500);
+        }
+
+        function submitOrder() {
+            const address = document.getElementById('shippingAddress').value, phone = document.getElementById('phoneNumber').value, landmark = document.getElementById('landmark').value;
+            if (!address || !phone || !landmark) { showNotification('الرجاء إدخال جميع معلومات الشحن', 'error'); return; }
+            if (!selectedPayment) { showNotification('الرجاء اختيار طريقة الدفع', 'error'); return; }
+            if (cart.length === 0) { showNotification('السلة فارغة', 'error'); return; }
+            if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; }
+            
+            if (selectedPayment === 'paypal') {
+                const paypalUsername = document.getElementById('paypalUsername').value;
+                if (!paypalUsername) { showNotification('الرجاء إدخال اسم المستخدم على PayPal', 'error'); return; }
+                if (!paypalConfirmed) { showNotification('الرجاء تأكيد الدفع عبر PayPal أولاً', 'error'); return; }
+            }
+            
+            let paymentStatus = 'pending';
+            let paymentDetails = {};
+            let statusText = '';
+            
+            if (selectedPayment === 'paypal') {
+                paymentDetails = { paypalUsername: document.getElementById('paypalUsername').value };
+                paymentStatus = 'paid_pending';
+                statusText = 'تم الدفع - قيد المراجعة';
+            } else {
+                statusText = 'قيد المراجعة';
+            }
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const newOrder = { 
+                id: orders.length + 1, userId: currentUser.id, userName: currentUser.name, userPhone: currentUser.phone,
+                shippingAddress: address, shippingPhone: phone, landmark: landmark, items: JSON.parse(JSON.stringify(cart)), 
+                total: total, paymentMethod: selectedPayment, paymentDetails: paymentDetails,
+                status: paymentStatus, 
+                statusText: statusText,
+                date: new Date().toISOString(), orderDate: new Date().toLocaleString('ar-EG') 
+            };
+            
+            orders.push(newOrder); localStorage.setItem('orders', JSON.stringify(orders));
+            cart.forEach(cartItem => { const product = products.find(p => p.id === cartItem.id); if (product) product.stock -= cartItem.quantity; });
+            saveProductsToStorage(); cart = []; localStorage.setItem('cart', JSON.stringify(cart)); updateCartCount();
+            
+            paypalConfirmed = false;
+            
+            showNotification(selectedPayment === 'paypal' ? '✅ تم تقديم الطلب - تم الدفع وقيد المراجعة ✓' : '✅ تم تقديم الطلب بنجاح!', 'success');
+            setTimeout(() => showPage('dashboard'), 2000);
+        }
+
+        function displayPendingOrders() {
+            const container = document.getElementById('pendingOrdersList');
+            if (!container) return;
+            const pendingOrders = orders.filter(o => o.status === 'pending');
+            const paidPendingOrders = orders.filter(o => o.status === 'paid_pending');
+            const allPending = [...pendingOrders, ...paidPendingOrders];
+            
+            if (allPending.length === 0) { container.innerHTML = '<p>لا توجد طلبات قيد المراجعة</p>'; return; }
+            container.innerHTML = allPending.map(order => `<div class="order-card"><div><strong>طلب #${order.id}</strong> - ${order.orderDate}</div><div>👤 ${order.userName}</div><div>📍 ${order.shippingAddress}</div><div>💰 ${order.total.toLocaleString()} ج.م</div><div>💳 ${order.paymentMethod === 'paypal' ? 'باي بال (PayPal)' : 'دفع عند الاستلام'} ${order.status === 'paid_pending' ? ' ✅ (تم الدفع)' : ''}</div><div>📝 الحالة: <span class="order-status ${order.status === 'paid_pending' ? 'status-paid-pending' : 'status-pending'}">${order.status === 'paid_pending' ? '💰 تم الدفع - قيد المراجعة' : '⏳ قيد المراجعة'}</span></div><details><summary>📋 تفاصيل المنتجات</summary>${order.items.map(item => `<div>• ${item.name} x ${item.quantity}</div>`).join('')}</details><div class="action-buttons"><button class="approve-btn" onclick="approveOrder(${order.id})">✅ قبول</button><button class="reject-btn" onclick="rejectOrder(${order.id})">❌ رفض</button></div></div>`).join('');
+        }
+
+        function displayCompletedOrders() {
+            const container = document.getElementById('completedOrdersList');
+            if (!container) return;
+            const completedOrders = orders.filter(o => o.status !== 'pending' && o.status !== 'paid_pending');
+            if (completedOrders.length === 0) { container.innerHTML = '<p>لا توجد طلبات مكتملة</p>'; return; }
+            container.innerHTML = completedOrders.map(order => `<div class="order-card"><div><strong>طلب #${order.id}</strong> - ${order.orderDate}</div><div>👤 ${order.userName}</div><div>📍 ${order.shippingAddress}</div><div>💰 ${order.total.toLocaleString()} ج.م</div><div>💳 ${order.paymentMethod === 'paypal' ? 'باي بال (PayPal) ✅' : 'دفع عند الاستلام'}</div><div>📝 الحالة: <span class="order-status status-${order.status}">${order.status === 'approved' ? '✓ مقبول' : order.status === 'shipped' ? '🚚 تم الشحن' : order.status === 'delivered' ? '✅ تم التوصيل' : '✗ مرفوض'}</span></div>${order.adminNote ? `<div>📌 ${order.adminNote}</div>` : ''}${order.status === 'approved' ? `<div class="action-buttons"><button class="ship-btn" onclick="markAsShipped(${order.id})">🚚 تم الشحن</button></div>` : order.status === 'shipped' ? `<div class="action-buttons"><button class="deliver-btn" onclick="markAsDelivered(${order.id})">✅ تأكيد الوصول</button></div>` : ''}</div>`).join('');
+        }
+
+        function displayUserOrders() {
+            const userOrders = orders.filter(order => order.userId === currentUser?.id);
+            const container = document.getElementById('dashboardContent');
+            if (userOrders.length === 0) { container.innerHTML = '<div style="text-align:center;padding:2rem;">لا توجد طلبات سابقة</div>'; return; }
+            container.innerHTML = userOrders.map(order => `<div class="order-card"><div><strong>طلب #${order.id}</strong> - ${order.orderDate}</div><div>📍 ${order.shippingAddress}</div><div>💰 ${order.total.toLocaleString()} ج.م</div><div>💳 ${order.paymentMethod === 'paypal' ? 'باي بال (PayPal) ✅' : 'دفع عند الاستلام'}</div><div>📝 الحالة: <span class="order-status ${order.status === 'paid_pending' ? 'status-paid-pending' : `status-${order.status}`}">${order.status === 'paid_pending' ? '💰 تم الدفع - قيد المراجعة' : order.status === 'pending' ? '⏳ قيد المراجعة' : order.status === 'approved' ? '✓ تم القبول' : order.status === 'shipped' ? '🚚 تم الشحن' : order.status === 'delivered' ? '✅ تم التوصيل' : '✗ مرفوض'}</span></div>${order.adminNote ? `<div>📌 ${order.adminNote}</div>` : ''}${order.shippingNote ? `<div>📌 ${order.shippingNote}</div>` : ''}${order.deliveryNote ? `<div>📌 ${order.deliveryNote}</div>` : ''}<details><summary>تفاصيل المنتجات</summary>${order.items.map(item => `<div>• ${item.name} x ${item.quantity}</div>`).join('')}</details></div>`).join('');
+        }
+
+        function showAdminPanel() { if (!isAdmin()) { showNotification('غير مصرح!', 'error'); return; } showPage('admin'); displayAdminProducts(); displayPendingOrders(); displayCompletedOrders(); displayAdminStats(); }
+        
+        function displayAdminStats() {
+            const container = document.getElementById('adminStats');
+            if (!container) return;
+            const pendingOrders = orders.filter(o => o.status === 'pending').length, 
+                  paidPendingOrders = orders.filter(o => o.status === 'paid_pending').length,
+                  approvedOrders = orders.filter(o => o.status === 'approved').length, 
+                  shippedOrders = orders.filter(o => o.status === 'shipped').length, 
+                  deliveredOrders = orders.filter(o => o.status === 'delivered').length, 
+                  rejectedOrders = orders.filter(o => o.status === 'rejected').length, 
+                  totalRevenue = orders.filter(o => o.status === 'delivered').reduce((sum, order) => sum + order.total, 0), 
+                  lowStock = products.filter(p => p.stock < 5).length;
+            container.innerHTML = `<div class="stat-card"><div>⏳ معلقة</div><div class="stat-number">${pendingOrders}</div></div>
+                                  <div class="stat-card"><div>💰 مدفوعة - قيد المراجعة</div><div class="stat-number">${paidPendingOrders}</div></div>
+                                  <div class="stat-card"><div>✓ مقبولة</div><div class="stat-number">${approvedOrders}</div></div>
+                                  <div class="stat-card"><div>🚚 تم شحنها</div><div class="stat-number">${shippedOrders}</div></div>
+                                  <div class="stat-card"><div>✅ تم توصيلها</div><div class="stat-number">${deliveredOrders}</div></div>
+                                  <div class="stat-card"><div>❌ مرفوضة</div><div class="stat-number">${rejectedOrders}</div></div>
+                                  <div class="stat-card"><div>💰 الإيرادات</div><div class="stat-number">${totalRevenue.toLocaleString()} ج.م</div></div>
+                                  <div class="stat-card"><div>⚠️ مخزون منخفض</div><div class="stat-number">${lowStock}</div></div>`;
+        }
+
+        function updateCartCount() { const count = cart.reduce((sum, item) => sum + item.quantity, 0); document.querySelectorAll('#cartCount').forEach(el => el.textContent = count); }
+        
+        function addToCart(productId, productName, productPrice) { 
+            if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; } 
+            const product = products.find(p => p.id === productId);
+            if (product && product.stock <= 0) { showNotification('المنتج غير متوفر حالياً', 'error'); return; }
+            const existingItem = cart.find(item => item.id === productId); 
+            if (existingItem) { if (product && existingItem.quantity + 1 > product.stock) { showNotification('الكمية المطلوبة غير متوفرة', 'error'); return; } existingItem.quantity++; } 
+            else { cart.push({ id: productId, name: productName, price: productPrice, quantity: 1 }); } 
+            localStorage.setItem('cart', JSON.stringify(cart)); updateCartCount(); showNotification('تم إضافة المنتج', 'success'); 
+        }
+        
+        function displayCart() { 
+            const container = document.getElementById('cartContainer'); 
+            if (!container) return; 
+            if (cart.length === 0) { container.innerHTML = '<div class="cart-container">سلة المشتريات فارغة</div>'; return; } 
+            let total = 0, html = '<div class="cart-container">'; 
+            cart.forEach((item, index) => { const itemTotal = item.price * item.quantity; total += itemTotal; html += `<div class="cart-item"><div class="cart-item-info"><div><strong>${item.name}</strong></div><div>${item.price.toLocaleString()} ج.م</div></div><div class="cart-item-quantity"><button class="quantity-btn" onclick="updateQuantity(${index}, -1)">-</button><span>${item.quantity}</span><button class="quantity-btn" onclick="updateQuantity(${index}, 1)">+</button></div><button class="remove-item" onclick="removeFromCart(${index})">حذف</button><div><strong>${itemTotal.toLocaleString()} ج.م</strong></div></div>`; }); 
+            html += `<div class="cart-total">الإجمالي: ${total.toLocaleString()} ج.م</div><button class="btn" onclick="proceedToCheckout()">متابعة الدفع</button></div>`; container.innerHTML = html; 
+        }
+        
+        function updateQuantity(index, change) { 
+            const item = cart[index]; 
+            if (item) { 
+                const product = products.find(p => p.id === item.id);
+                const newQuantity = item.quantity + change;
+                if (newQuantity > 0 && product && newQuantity <= product.stock) { item.quantity = newQuantity; localStorage.setItem('cart', JSON.stringify(cart)); displayCart(); updateCartCount(); }
+                else if (newQuantity <= 0) { cart.splice(index, 1); localStorage.setItem('cart', JSON.stringify(cart)); displayCart(); updateCartCount(); }
+                else { showNotification('الكمية المطلوبة غير متوفرة', 'error'); }
+            } 
+        }
+        
+        function removeFromCart(index) { cart.splice(index, 1); localStorage.setItem('cart', JSON.stringify(cart)); displayCart(); updateCartCount(); }
+        
+        function proceedToCheckout() { 
+            if (cart.length === 0) { showNotification('السلة فارغة', 'error'); return; } 
+            if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; } 
+            selectedPayment = null;
+            paypalConfirmed = false;
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+            document.getElementById('paypal').checked = false;
+            document.getElementById('cod').checked = false;
+            document.getElementById('paypalDetails').style.display = 'none';
+            document.getElementById('paypalUsername').value = '';
+            document.getElementById('shippingAddress').value = '';
+            document.getElementById('phoneNumber').value = '';
+            document.getElementById('landmark').value = '';
+            showPage('checkout'); displayCheckoutSummary(); 
+        }
+        
+        function displayCheckoutSummary() { 
+            const container = document.getElementById('checkoutSummary'); 
+            if (!container) return; 
+            let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0); 
+            container.innerHTML = `<div><h3>ملخص الطلب</h3>${cart.map(item => `<div style="display:flex;justify-content:space-between;">${item.name} x ${item.quantity} <span>${(item.price * item.quantity).toLocaleString()} ج.م</span></div>`).join('')}<div class="cart-total">الإجمالي: ${total.toLocaleString()} ج.م</div></div>`; 
+        }
+        
+        function selectPayment(method, element) { 
+            selectedPayment = method; 
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected')); 
+            if (element) element.classList.add('selected');
+            const radioButton = document.getElementById(method);
+            if (radioButton) radioButton.checked = true;
+            document.getElementById('paypalDetails').style.display = method === 'paypal' ? 'block' : 'none'; 
+            if (method !== 'paypal') paypalConfirmed = false;
+        }
+        
+        function login() { 
+            const email = document.getElementById('loginEmail').value, password = document.getElementById('loginPassword').value, user = users.find(u => u.email === email && u.password === password); 
+            if (user) { currentUser = user; localStorage.setItem('currentUser', JSON.stringify(currentUser)); closeAuthModal(); showNotification(`مرحباً ${user.name}`, 'success'); updateUIForAdmin(); showPage('home'); } 
+            else showNotification('بيانات غير صحيحة', 'error'); 
+        }
+        
+        function register() { 
+            const name = document.getElementById('regName').value, email = document.getElementById('regEmail').value, phone = document.getElementById('regPhone').value, password = document.getElementById('regPassword').value; 
+            if (!name || !email || !phone || !password) { showNotification('املأ جميع الحقول', 'error'); return; } 
+            if (users.find(u => u.email === email)) { showNotification('البريد موجود', 'error'); return; } 
+            users.push({ id: users.length + 1, name, email, phone, password, isAdmin: false }); localStorage.setItem('users', JSON.stringify(users)); showNotification('تم إنشاء الحساب', 'success'); showLoginForm(); 
+        }
+        
+        function logout() { currentUser = null; localStorage.removeItem('currentUser'); updateUIForAdmin(); showNotification('تم تسجيل الخروج', 'info'); showPage('home'); }
+        function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; showLoginForm(); }
+        function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
+        function showLoginForm() { document.getElementById('loginFormDiv').style.display = 'block'; document.getElementById('registerFormDiv').style.display = 'none'; }
+        function showRegisterForm() { document.getElementById('loginFormDiv').style.display = 'none'; document.getElementById('registerFormDiv').style.display = 'block'; }
+        
+        function showPage(page) {
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('productsPage').style.display = 'none';
+            document.getElementById('cartPage').style.display = 'none';
+            document.getElementById('checkoutPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('adminPage').style.display = 'none';
+            if (page === 'home') { document.getElementById('homePage').style.display = 'block'; displayProducts(products.slice(0, 4), 'featuredProducts'); }
+            else if (page === 'products') { document.getElementById('productsPage').style.display = 'block'; displayProducts(products, 'allProducts'); }
+            else if (page === 'cart') { document.getElementById('cartPage').style.display = 'block'; displayCart(); }
+            else if (page === 'checkout') { if (cart.length === 0) { showNotification('السلة فارغة', 'error'); showPage('cart'); return; } document.getElementById('checkoutPage').style.display = 'block'; }
+            else if (page === 'dashboard') { if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; } document.getElementById('dashboardPage').style.display = 'block'; displayUserOrders(); }
+            else if (page === 'admin') { if (!isAdmin()) { showNotification('غير مصرح', 'error'); showPage('home'); return; } document.getElementById('adminPage').style.display = 'block'; }
+        }
+        
+        function showNotification(message, type) { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); setTimeout(() => notification.remove(), 3000); }
+        
+        initializeAdmin();
+        updateCartCount();
+        updateUIForAdmin();
+        showPage('home');
+    </script>
+</body>
+</html>
