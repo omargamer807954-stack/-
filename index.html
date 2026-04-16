@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>مشترياتي - نظام متكامل للبيع والشراء</title>
+    
+    <!-- Firebase SDK (الإصدار القديم المتوافق) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -48,7 +53,6 @@
             cursor: pointer;
         }
 
-        /* القائمة العادية للكمبيوتر */
         .nav-links {
             display: flex;
             gap: 2rem;
@@ -71,7 +75,6 @@
             color: white;
         }
 
-        /* زر القائمة (الهامبرغر) - يظهر فقط على التلفون */
         .menu-toggle {
             display: none;
             background: none;
@@ -80,15 +83,9 @@
             cursor: pointer;
             color: #667eea;
             padding: 0.5rem;
-            transition: all 0.3s;
             z-index: 1001;
         }
 
-        .menu-toggle:hover {
-            transform: scale(1.1);
-        }
-
-        /* القائمة المنبثقة للتلفون */
         .mobile-menu {
             position: fixed;
             top: 70px;
@@ -115,7 +112,6 @@
             color: #333;
             font-weight: 500;
             border-bottom: 1px solid #f0f0f0;
-            transition: all 0.3s;
             cursor: pointer;
             font-size: 1.1rem;
         }
@@ -123,12 +119,6 @@
         .mobile-menu a:hover {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-        }
-
-        .mobile-menu .cart-icon-mobile {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .cart-icon {
@@ -150,7 +140,6 @@
             text-align: center;
         }
 
-        /* تغطية خلف القائمة */
         .menu-overlay {
             position: fixed;
             top: 0;
@@ -325,12 +314,6 @@
             font-size: 1rem;
         }
 
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -419,11 +402,9 @@
             transition: all 0.3s;
         }
 
-        .payment-option:hover,
         .payment-option.selected {
             border-color: #667eea;
             background: #f8f9ff;
-            transform: scale(1.05);
         }
 
         .paypal-link {
@@ -435,12 +416,6 @@
             text-decoration: none;
             margin-top: 10px;
             font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .paypal-link:hover {
-            background: #003087;
-            transform: scale(1.02);
         }
 
         .notification {
@@ -469,7 +444,6 @@
         .notification.success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
         .notification.error { background: linear-gradient(135deg, #dc3545 0%, #ff4757 100%); }
         .notification.info { background: linear-gradient(135deg, #17a2b8 0%, #00bcd4 100%); }
-        .notification.warning { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); }
 
         .stats-grid {
             display: grid;
@@ -560,54 +534,37 @@
             margin: 2rem 0;
         }
 
-        .empty-products h3 {
-            color: #667eea;
-            margin-bottom: 1rem;
-        }
-
-        /* استجابة للهواتف */
         @media (max-width: 768px) {
             .navbar {
                 padding: 0.8rem 5%;
             }
-            
             .logo {
                 font-size: 1.5rem;
             }
-            
-            /* إخفاء القائمة العادية */
             .nav-links {
                 display: none;
             }
-            
-            /* إظهار زر الهامبرغر */
             .menu-toggle {
                 display: block;
             }
-            
             .container {
                 padding: 1rem;
                 margin-top: 70px;
             }
-            
             .products-grid {
                 grid-template-columns: 1fr;
                 gap: 1rem;
             }
-            
             .cart-item {
                 flex-direction: column;
                 text-align: center;
             }
-            
             .hero {
                 padding: 1.5rem;
             }
-            
             .hero h1 {
                 font-size: 1.5rem;
             }
-            
             .payment-methods {
                 grid-template-columns: 1fr;
             }
@@ -619,10 +576,8 @@
         <nav class="navbar">
             <div class="logo" onclick="closeMobileMenuAndShowPage('home')">مشترياتي 🛒</div>
             
-            <!-- زر الهامبرغر (3 شرطات) -->
             <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">☰</button>
             
-            <!-- القائمة العادية للكمبيوتر -->
             <div class="nav-links">
                 <a onclick="showPage('home')">الرئيسية</a>
                 <a onclick="showPage('products')">المنتجات</a>
@@ -638,21 +593,16 @@
         </nav>
     </div>
 
-    <!-- القائمة المنبثقة للتلفون -->
     <div class="mobile-menu" id="mobileMenu">
         <a onclick="closeMobileMenuAndShowPage('home')">🏠 الرئيسية</a>
         <a onclick="closeMobileMenuAndShowPage('products')">📦 المنتجات</a>
         <a onclick="closeMobileMenuAndShowPage('dashboard')">📋 طلباتي</a>
-        <a onclick="closeMobileMenuAndShowPage('cart')" class="cart-icon-mobile">
-            🛒 السلة
-            <span class="cart-count" id="cartCountMobile">0</span>
-        </a>
+        <a onclick="closeMobileMenuAndShowPage('cart')">🛒 السلة</a>
         <a id="adminPanelLinkMobile" onclick="closeMobileMenuAndShowAdminPanel()" style="display:none;">👑 لوحة المدير</a>
         <a id="authLinkMobile" onclick="closeMobileMenuAndShowAuthModal()">🔐 دخول / تسجيل</a>
         <a id="logoutLinkMobile" onclick="closeMobileMenuAndLogout()" style="display:none;">🚪 تسجيل خروج</a>
     </div>
     
-    <!-- تغطية خلف القائمة -->
     <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
 
     <div class="container" id="mainContainer">
@@ -765,7 +715,6 @@
         </div>
     </div>
 
-    <!-- مودال تسجيل الدخول -->
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeAuthModal()">&times;</span>
@@ -806,7 +755,6 @@
         </div>
     </div>
 
-    <!-- مودال إضافة/تعديل منتج -->
     <div id="productModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeProductModal()">&times;</span>
@@ -880,7 +828,6 @@
         </div>
     </div>
 
-    <!-- مودال إدارة المستخدمين -->
     <div id="usersModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeUsersModal()">&times;</span>
@@ -890,15 +837,25 @@
     </div>
 
     <script>
+        // ==================== إعدادات Firebase ====================
+        // 🔴 ده الـ config بتاعك - حطه هنا 🔴
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4hHIIFAuIUfSy98OfqOR6rteaktz-VSY",
+            authDomain: "myshop-14f4f.firebaseapp.com",
+            projectId: "myshop-14f4f",
+            storageBucket: "myshop-14f4f.firebasestorage.app",
+            messagingSenderId: "353175172946",
+            appId: "1:353175172946:web:27c3322eb5487c65396c8b",
+            measurementId: "G-KMVSLZ2KNC"
+        };
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const productsRef = database.ref('products');
+
         // ==================== البيانات الأساسية ====================
-        let products = JSON.parse(localStorage.getItem('products')) || [];
-        
-        // مسح المنتجات الافتراضية القديمة
-        if (products.length > 0 && products.some(p => p.id >= 1 && p.id <= 6)) {
-            products = [];
-            localStorage.removeItem('products');
-        }
-        
+        let products = [];
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let users = JSON.parse(localStorage.getItem('users')) || [];
         let orders = JSON.parse(localStorage.getItem('orders')) || [];
@@ -907,6 +864,125 @@
         let selectedPayment = null;
         let currentImageData = null;
         let paypalConfirmed = false;
+
+        // ==================== تحميل المنتجات من Firebase ====================
+        function loadProductsFromFirebase() {
+            productsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    products = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+                } else {
+                    products = [];
+                }
+                displayProducts(products, 'allProducts');
+                displayProducts(products.slice(0, 4), 'featuredProducts');
+                if (isAdmin()) displayAdminProducts();
+                showNotification('تم تحديث المنتجات من السحابة', 'info');
+            });
+        }
+
+        // ==================== حفظ منتج في Firebase ====================
+        function saveProductToFirebase(product) {
+            const newProductRef = productsRef.push();
+            product.id = newProductRef.key;
+            newProductRef.set(product);
+            showNotification('تم إضافة المنتج إلى السحابة', 'success');
+        }
+
+        // ==================== تحديث منتج في Firebase ====================
+        function updateProductInFirebase(productId, productData) {
+            productsRef.child(productId).update(productData);
+            showNotification('تم تحديث المنتج في السحابة', 'success');
+        }
+
+        // ==================== حذف منتج من Firebase ====================
+        function deleteProductFromFirebase(productId) {
+            productsRef.child(productId).remove();
+            showNotification('تم حذف المنتج من السحابة', 'info');
+        }
+
+        // ==================== دوال المنتجات ====================
+        function saveProduct() {
+            if (!isAdmin()) return;
+            const productData = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                stock: parseInt(document.getElementById('productStock').value),
+                priceRange: document.getElementById('priceRange').value,
+                productType: document.getElementById('productType').value,
+                targetGroup: document.getElementById('targetGroup').value,
+                ageRange: document.getElementById('ageRange').value,
+                warnings: document.getElementById('warnings').value,
+                imageData: currentImageData || null
+            };
+            if (!productData.name || !productData.price) {
+                showNotification('الرجاء إدخال اسم المنتج والسعر', 'error');
+                return;
+            }
+            if (editingProductId) {
+                updateProductInFirebase(editingProductId, productData);
+            } else {
+                saveProductToFirebase(productData);
+            }
+            closeProductModal();
+            resetProductForm();
+        }
+
+        function deleteProduct(productId) {
+            if (!isAdmin()) return;
+            if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+                deleteProductFromFirebase(productId);
+            }
+        }
+
+        function resetProductForm() {
+            editingProductId = null;
+            currentImageData = null;
+            document.getElementById('productModalTitle').innerText = 'إضافة منتج جديد';
+            document.getElementById('productName').value = '';
+            document.getElementById('productDescription').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productStock').value = '';
+            document.getElementById('priceRange').value = 'medium';
+            document.getElementById('productType').value = 'other';
+            document.getElementById('targetGroup').value = 'all';
+            document.getElementById('ageRange').value = 'all';
+            document.getElementById('warnings').value = '';
+            document.getElementById('productImageFile').value = '';
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+        }
+
+        function editProduct(id) {
+            if (!isAdmin()) return;
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            editingProductId = id;
+            currentImageData = product.imageData || null;
+            document.getElementById('productModalTitle').innerText = 'تعديل المنتج';
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productDescription').value = product.description;
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productStock').value = product.stock;
+            document.getElementById('priceRange').value = product.priceRange || 'medium';
+            document.getElementById('productType').value = product.productType || 'other';
+            document.getElementById('targetGroup').value = product.targetGroup || 'all';
+            document.getElementById('ageRange').value = product.ageRange || 'all';
+            document.getElementById('warnings').value = product.warnings || '';
+            if (currentImageData) {
+                document.getElementById('imagePreviewContainer').innerHTML = `<img src="${currentImageData}" class="image-preview">`;
+            }
+            document.getElementById('productModal').style.display = 'flex';
+        }
+
+        function showAddProductModal() {
+            if (!isAdmin()) return;
+            resetProductForm();
+            document.getElementById('productModal').style.display = 'flex';
+        }
 
         // ==================== دوال القائمة المنبثقة ====================
         function toggleMobileMenu() {
@@ -959,7 +1035,6 @@
             }
         }
 
-        function saveProductsToStorage() { localStorage.setItem('products', JSON.stringify(products)); }
         function isAdmin() { return currentUser && currentUser.isAdmin === true; }
 
         function initializeAdmin() {
@@ -970,6 +1045,7 @@
             }
         }
 
+        // ==================== دوال العرض ====================
         function getPriceRangeText(priceRange) { const map = { low: 'رخيص', medium: 'متوسط', high: 'غالي' }; return map[priceRange] || 'غير محدد'; }
         function getPriceRangeClass(priceRange) { const map = { low: 'price-range-low', medium: 'price-range-medium', high: 'price-range-high' }; return map[priceRange] || ''; }
         function getTargetGroupText(target) { const map = { all: 'الجميع', kids: 'أطفال', boys: 'شباب', girls: 'بنات', women: 'سيدات', men: 'رجال' }; return map[target] || 'الجميع'; }
@@ -1016,7 +1092,7 @@
                             ${product.warnings ? `<div class="detail-badge warning" style="display:block;margin-top:5px;">⚠️ تحذير: ${product.warnings}</div>` : ''}
                         </div>
                         <div>✅ متوفر: ${product.stock}</div>
-                        <button class="add-to-cart" onclick="addToCart(${product.id}, '${product.name}', ${product.price})">🛒 أضف للسلة</button>
+                        <button class="add-to-cart" onclick="addToCart('${product.id}', '${product.name}', ${product.price})">🛒 أضف للسلة</button>
                     </div>
                 </div>
             `).join('') + '</div>';
@@ -1041,97 +1117,15 @@
                         <div class="product-price">${product.price.toLocaleString()} ج.م</div>
                         <div>📦 المخزون: ${product.stock}</div>
                         <div class="product-actions">
-                            <button class="edit-btn" onclick="editProduct(${product.id})">✏️ تعديل</button>
-                            <button class="delete-btn" onclick="deleteProduct(${product.id})">🗑️ حذف</button>
+                            <button class="edit-btn" onclick="editProduct('${product.id}')">✏️ تعديل</button>
+                            <button class="delete-btn" onclick="deleteProduct('${product.id}')">🗑️ حذف</button>
                         </div>
                     </div>
                 </div>
             `).join('') + '</div>';
         }
 
-        function showAddProductModal() {
-            if (!isAdmin()) return;
-            editingProductId = null;
-            currentImageData = null;
-            document.getElementById('productModalTitle').innerText = 'إضافة منتج جديد';
-            document.getElementById('productName').value = '';
-            document.getElementById('productDescription').value = '';
-            document.getElementById('productPrice').value = '';
-            document.getElementById('productStock').value = '';
-            document.getElementById('priceRange').value = 'medium';
-            document.getElementById('productType').value = 'other';
-            document.getElementById('targetGroup').value = 'all';
-            document.getElementById('ageRange').value = 'all';
-            document.getElementById('warnings').value = '';
-            document.getElementById('productImageFile').value = '';
-            document.getElementById('imagePreviewContainer').innerHTML = '';
-            document.getElementById('productModal').style.display = 'flex';
-        }
-
-        function editProduct(id) {
-            if (!isAdmin()) return;
-            const product = products.find(p => p.id === id);
-            if (!product) return;
-            editingProductId = id;
-            currentImageData = product.imageData || null;
-            document.getElementById('productModalTitle').innerText = 'تعديل المنتج';
-            document.getElementById('productName').value = product.name;
-            document.getElementById('productDescription').value = product.description;
-            document.getElementById('productPrice').value = product.price;
-            document.getElementById('productStock').value = product.stock;
-            document.getElementById('priceRange').value = product.priceRange || 'medium';
-            document.getElementById('productType').value = product.productType || 'other';
-            document.getElementById('targetGroup').value = product.targetGroup || 'all';
-            document.getElementById('ageRange').value = product.ageRange || 'all';
-            document.getElementById('warnings').value = product.warnings || '';
-            if (currentImageData) document.getElementById('imagePreviewContainer').innerHTML = `<img src="${currentImageData}" class="image-preview">`;
-            else document.getElementById('imagePreviewContainer').innerHTML = '';
-            document.getElementById('productModal').style.display = 'flex';
-        }
-
-        function saveProduct() {
-            if (!isAdmin()) return;
-            const productData = {
-                name: document.getElementById('productName').value,
-                description: document.getElementById('productDescription').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                stock: parseInt(document.getElementById('productStock').value),
-                priceRange: document.getElementById('priceRange').value,
-                productType: document.getElementById('productType').value,
-                targetGroup: document.getElementById('targetGroup').value,
-                ageRange: document.getElementById('ageRange').value,
-                warnings: document.getElementById('warnings').value,
-                imageData: currentImageData || null
-            };
-            if (!productData.name || !productData.price) { showNotification('الرجاء إدخال اسم المنتج والسعر', 'error'); return; }
-            if (editingProductId) {
-                const index = products.findIndex(p => p.id === editingProductId);
-                if (index !== -1) { products[index] = { ...products[index], ...productData }; showNotification('تم تعديل المنتج', 'success'); }
-            } else {
-                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-                products.push({ id: newId, ...productData }); showNotification('تم إضافة المنتج', 'success');
-            }
-            saveProductsToStorage();
-            closeProductModal();
-            if (isAdmin()) { displayAdminProducts(); displayAdminStats(); }
-            displayProducts(products, 'allProducts');
-            displayProducts(products.slice(0, 4), 'featuredProducts');
-        }
-
-        function deleteProduct(id) {
-            if (!isAdmin()) return;
-            if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-                products = products.filter(p => p.id !== id);
-                saveProductsToStorage();
-                if (isAdmin()) { displayAdminProducts(); displayAdminStats(); }
-                displayProducts(products, 'allProducts');
-                displayProducts(products.slice(0, 4), 'featuredProducts');
-                showNotification('تم حذف المنتج', 'info');
-            }
-        }
-
-        function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
-
+        // ==================== دوال المستخدمين ====================
         function makeUserAdmin(userId) {
             const user = users.find(u => u.id === userId);
             if (user && !user.isSuperAdmin) { user.isAdmin = true; localStorage.setItem('users', JSON.stringify(users)); if (currentUser && currentUser.id === userId) { currentUser.isAdmin = true; localStorage.setItem('currentUser', JSON.stringify(currentUser)); updateUIForAdmin(); } showNotification(`تم جعل ${user.name} مديراً`, 'success'); if (document.getElementById('usersList')) displayUsersList(); }
@@ -1162,6 +1156,7 @@
             updateMobileAdminLinks();
         }
 
+        // ==================== دوال الطلبات ====================
         function approveOrder(orderId) { 
             const order = orders.find(o => o.id === orderId); 
             if (order && (order.status === 'pending' || order.status === 'paid_pending')) { 
@@ -1182,8 +1177,6 @@
                     order.adminNote = `تم رفض الطلب: ${reason} - ${new Date().toLocaleString('ar-EG')}`; 
                     localStorage.setItem('orders', JSON.stringify(orders)); 
                     order.items.forEach(item => { const product = products.find(p => p.id === item.id); if (product) product.stock += item.quantity; }); 
-                    saveProductsToStorage(); 
-                    showNotification(`❌ تم رفض الطلب #${orderId}`, 'warning'); 
                     if (isAdmin()) { displayPendingOrders(); displayCompletedOrders(); displayAdminStats(); displayAdminProducts(); } 
                 } 
             } 
@@ -1260,7 +1253,7 @@
             
             orders.push(newOrder); localStorage.setItem('orders', JSON.stringify(orders));
             cart.forEach(cartItem => { const product = products.find(p => p.id === cartItem.id); if (product) product.stock -= cartItem.quantity; });
-            saveProductsToStorage(); cart = []; localStorage.setItem('cart', JSON.stringify(cart)); updateCartCount();
+            cart = []; localStorage.setItem('cart', JSON.stringify(cart)); updateCartCount();
             
             paypalConfirmed = false;
             
@@ -1408,6 +1401,7 @@
         function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
         function showLoginForm() { document.getElementById('loginFormDiv').style.display = 'block'; document.getElementById('registerFormDiv').style.display = 'none'; }
         function showRegisterForm() { document.getElementById('loginFormDiv').style.display = 'none'; document.getElementById('registerFormDiv').style.display = 'block'; }
+        function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
         
         function showPage(page) {
             document.getElementById('homePage').style.display = 'none';
@@ -1427,7 +1421,9 @@
         
         function showNotification(message, type) { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); setTimeout(() => notification.remove(), 3000); }
         
+        // بدء التطبيق
         initializeAdmin();
+        loadProductsFromFirebase();
         updateCartCount();
         updateUIForAdmin();
         showPage('home');
