@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>مشترياتي - نظام متكامل للبيع والشراء</title>
     <style>
         * {
@@ -38,7 +38,7 @@
         }
 
         .logo {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: bold;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
@@ -48,6 +48,7 @@
             cursor: pointer;
         }
 
+        /* القائمة العادية للكمبيوتر */
         .nav-links {
             display: flex;
             gap: 2rem;
@@ -70,6 +71,64 @@
             color: white;
         }
 
+        /* زر القائمة (الهامبرغر) - يظهر فقط على التلفون */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #667eea;
+            padding: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .menu-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* القائمة المنبثقة للتلفون */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            right: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            z-index: 999;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .mobile-menu a:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .mobile-menu .cart-icon-mobile {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .cart-icon {
             position: relative;
             cursor: pointer;
@@ -87,6 +146,22 @@
             font-size: 12px;
             min-width: 18px;
             text-align: center;
+        }
+
+        /* تغطية خلف القائمة */
+        .menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+
+        .menu-overlay.active {
+            display: block;
         }
 
         .container {
@@ -494,24 +569,71 @@
             margin-bottom: 1rem;
         }
 
+        /* استجابة للهواتف */
         @media (max-width: 768px) {
-            .navbar { flex-direction: column; gap: 1rem; }
-            .products-grid { grid-template-columns: 1fr; }
-            .cart-item { flex-direction: column; text-align: center; }
+            .navbar {
+                padding: 0.8rem 5%;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            /* إخفاء القائمة العادية */
+            .nav-links {
+                display: none;
+            }
+            
+            /* إظهار زر الهامبرغر */
+            .menu-toggle {
+                display: block;
+            }
+            
+            .container {
+                padding: 1rem;
+                margin-top: 70px;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .cart-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .hero {
+                padding: 1.5rem;
+            }
+            
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+            
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <nav class="navbar">
-            <div class="logo" onclick="showPage('home')">مشترياتي 🛒</div>
+            <div class="logo" onclick="closeMobileMenuAndShowPage('home')">مشترياتي 🛒</div>
+            
+            <!-- زر الهامبرغر (3 شرطات) -->
+            <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">☰</button>
+            
+            <!-- القائمة العادية للكمبيوتر -->
             <div class="nav-links">
                 <a onclick="showPage('home')">الرئيسية</a>
                 <a onclick="showPage('products')">المنتجات</a>
                 <a onclick="showPage('dashboard')">طلباتي</a>
                 <div class="cart-icon" onclick="showPage('cart')">
                     🛒
-                    <span class="cart-count" id="cartCount">0</span>
+                    <span class="cart-count" id="cartCountDesktop">0</span>
                 </div>
                 <a id="adminPanelLink" onclick="showAdminPanel()" style="display:none;">👑 لوحة المدير</a>
                 <a id="authLink" onclick="showAuthModal()">دخول / تسجيل</a>
@@ -519,6 +641,23 @@
             </div>
         </nav>
     </div>
+
+    <!-- القائمة المنبثقة للتلفون -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a onclick="closeMobileMenuAndShowPage('home')">🏠 الرئيسية</a>
+        <a onclick="closeMobileMenuAndShowPage('products')">📦 المنتجات</a>
+        <a onclick="closeMobileMenuAndShowPage('dashboard')">📋 طلباتي</a>
+        <a onclick="closeMobileMenuAndShowPage('cart')" class="cart-icon-mobile">
+            🛒 السلة
+            <span class="cart-count" id="cartCountMobile">0</span>
+        </a>
+        <a id="adminPanelLinkMobile" onclick="closeMobileMenuAndShowAdminPanel()" style="display:none;">👑 لوحة المدير</a>
+        <a id="authLinkMobile" onclick="closeMobileMenuAndShowAuthModal()">🔐 دخول / تسجيل</a>
+        <a id="logoutLinkMobile" onclick="closeMobileMenuAndLogout()" style="display:none;">🚪 تسجيل خروج</a>
+    </div>
+    
+    <!-- تغطية خلف القائمة -->
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
 
     <div class="container" id="mainContainer">
         <div id="homePage">
@@ -758,13 +897,10 @@
         // ==================== البيانات الأساسية ====================
         let products = JSON.parse(localStorage.getItem('products')) || [];
         
-        // IMPORTANT: حذف المنتجات الافتراضية القديمة نهائياً
-        // لو في منتجات ids من 1 لـ 6 (المنتجات الافتراضية القديمة) يتم مسحها
+        // مسح المنتجات الافتراضية القديمة
         if (products.length > 0 && products.some(p => p.id >= 1 && p.id <= 6)) {
-            // نمسح المنتجات القديمة ونجدد localStorage
             products = [];
             localStorage.removeItem('products');
-            console.log('✅ تم مسح المنتجات الافتراضية القديمة بنجاح');
         }
         
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -776,7 +912,56 @@
         let currentImageData = null;
         let paypalConfirmed = false;
 
-        // تم إزالة المنتجات الافتراضية بالكامل - لن يظهر أي منتج إلا بعد إضافته بواسطة المدير
+        // ==================== دوال القائمة المنبثقة ====================
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('menuOverlay');
+            menu.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+        
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('menuOverlay');
+            menu.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+        
+        function closeMobileMenuAndShowPage(page) {
+            closeMobileMenu();
+            showPage(page);
+        }
+        
+        function closeMobileMenuAndShowAdminPanel() {
+            closeMobileMenu();
+            showAdminPanel();
+        }
+        
+        function closeMobileMenuAndShowAuthModal() {
+            closeMobileMenu();
+            showAuthModal();
+        }
+        
+        function closeMobileMenuAndLogout() {
+            closeMobileMenu();
+            logout();
+        }
+        
+        function updateMobileAdminLinks() {
+            const adminLinkMobile = document.getElementById('adminPanelLinkMobile');
+            const authLinkMobile = document.getElementById('authLinkMobile');
+            const logoutLinkMobile = document.getElementById('logoutLinkMobile');
+            
+            if (adminLinkMobile) adminLinkMobile.style.display = isAdmin() ? 'block' : 'none';
+            
+            if (currentUser) {
+                if (authLinkMobile) authLinkMobile.style.display = 'none';
+                if (logoutLinkMobile) logoutLinkMobile.style.display = 'block';
+            } else {
+                if (authLinkMobile) authLinkMobile.style.display = 'block';
+                if (logoutLinkMobile) logoutLinkMobile.style.display = 'none';
+            }
+        }
 
         function saveProductsToStorage() { localStorage.setItem('products', JSON.stringify(products)); }
         function isAdmin() { return currentUser && currentUser.isAdmin === true; }
@@ -974,7 +1159,12 @@
         }
 
         function closeUsersModal() { document.getElementById('usersModal').style.display = 'none'; }
-        function updateUIForAdmin() { const adminLink = document.getElementById('adminPanelLink'); if (adminLink) adminLink.style.display = isAdmin() ? 'inline' : 'none'; }
+        
+        function updateUIForAdmin() { 
+            const adminLink = document.getElementById('adminPanelLink'); 
+            if (adminLink) adminLink.style.display = isAdmin() ? 'inline' : 'none';
+            updateMobileAdminLinks();
+        }
 
         function approveOrder(orderId) { 
             const order = orders.find(o => o.id === orderId); 
@@ -1057,14 +1247,10 @@
             
             let paymentStatus = 'pending';
             let paymentDetails = {};
-            let statusText = '';
             
             if (selectedPayment === 'paypal') {
                 paymentDetails = { paypalUsername: document.getElementById('paypalUsername').value };
                 paymentStatus = 'paid_pending';
-                statusText = 'تم الدفع - قيد المراجعة';
-            } else {
-                statusText = 'قيد المراجعة';
             }
             
             const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -1073,7 +1259,6 @@
                 shippingAddress: address, shippingPhone: phone, landmark: landmark, items: JSON.parse(JSON.stringify(cart)), 
                 total: total, paymentMethod: selectedPayment, paymentDetails: paymentDetails,
                 status: paymentStatus, 
-                statusText: statusText,
                 date: new Date().toISOString(), orderDate: new Date().toLocaleString('ar-EG') 
             };
             
@@ -1136,7 +1321,11 @@
                                   <div class="stat-card"><div>⚠️ مخزون منخفض</div><div class="stat-number">${lowStock}</div></div>`;
         }
 
-        function updateCartCount() { const count = cart.reduce((sum, item) => sum + item.quantity, 0); document.querySelectorAll('#cartCount').forEach(el => el.textContent = count); }
+        function updateCartCount() { 
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0); 
+            document.getElementById('cartCountDesktop').textContent = count;
+            document.getElementById('cartCountMobile').textContent = count;
+        }
         
         function addToCart(productId, productName, productPrice) { 
             if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; } 
@@ -1235,6 +1424,7 @@
             else if (page === 'checkout') { if (cart.length === 0) { showNotification('السلة فارغة', 'error'); showPage('cart'); return; } document.getElementById('checkoutPage').style.display = 'block'; }
             else if (page === 'dashboard') { if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; } document.getElementById('dashboardPage').style.display = 'block'; displayUserOrders(); }
             else if (page === 'admin') { if (!isAdmin()) { showNotification('غير مصرح', 'error'); showPage('home'); return; } document.getElementById('adminPage').style.display = 'block'; }
+            closeMobileMenu();
         }
         
         function showNotification(message, type) { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); setTimeout(() => notification.remove(), 3000); }
