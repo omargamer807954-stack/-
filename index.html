@@ -866,16 +866,20 @@
         let currentImageData = null;
         let paypalConfirmed = false;
 
-        // ==================== تحميل المستخدمين من Firebase ====================
-        function loadUsersFromFirebase() {
+        // ==================== تحميل جميع المستخدمين من Firebase ====================
+        function loadAllUsers() {
             usersRef.on('value', (snapshot) => {
                 const data = snapshot.val();
-                // المستخدمين بيتخزنوا في متغير عالمي بس هنستخدمهم في لوحة المدير
-                window.firebaseUsers = data ? Object.keys(data).map(key => ({
-                    id: key,
-                    ...data[key]
-                })) : [];
-                if (isAdmin() && document.getElementById('usersList').style.display !== 'none') {
+                if (data) {
+                    window.allUsers = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+                } else {
+                    window.allUsers = [];
+                }
+                // لو المدير شايف صفحة المستخدمين، يحدث العرض
+                if (isAdmin() && document.getElementById('usersModal').style.display === 'flex') {
                     displayUsersList();
                 }
             });
@@ -899,12 +903,16 @@
             });
         }
 
-        // ==================== حفظ مستخدم في Firebase ====================
-        function saveUserToFirebase(user) {
+        // ==================== حفظ مستخدم جديد في Firebase ====================
+        function saveUserToFirebase(user, callback) {
             const newUserRef = usersRef.push();
             user.id = newUserRef.key;
-            newUserRef.set(user);
-            return user;
+            newUserRef.set(user).then(() => {
+                if (callback) callback(user);
+            }).catch((error) => {
+                console.error("خطأ في حفظ المستخدم:", error);
+                showNotification('حدث خطأ في حفظ المستخدم', 'error');
+            });
         }
 
         // ==================== دوال المنتجات ====================
@@ -937,7 +945,8 @@
                 targetGroup: document.getElementById('targetGroup').value,
                 ageRange: document.getElementById('ageRange').value,
                 warnings: document.getElementById('warnings').value,
-                imageData: currentImageData || null
+                imageData: currentImageData || null,
+                createdAt: new Date().toISOString()
             };
             if (!productData.name || !productData.price) {
                 showNotification('الرجاء إدخال اسم المنتج والسعر', 'error');
@@ -1004,7 +1013,7 @@
             document.getElementById('productModal').style.display = 'flex';
         }
 
-        // ==================== دوال المستخدمين (مع Firebase) ====================
+        // ==================== دوال المستخدمين ====================
         function isAdmin() { 
             return currentUser && currentUser.isAdmin === true; 
         }
@@ -1060,7 +1069,8 @@
                         phone: "01000000000",
                         password: "admin123",
                         isAdmin: true,
-                        isSuperAdmin: true
+                        isSuperAdmin: true,
+                        createdAt: new Date().toISOString()
                     };
                     saveUserToFirebase(adminUser);
                 }
@@ -1077,6 +1087,9 @@
                 if (data) {
                     const usersList = Object.values(data);
                     foundUser = usersList.find(u => u.email === email && u.password === password);
+                    if (foundUser) {
+                        foundUser.firebaseId = Object.keys(data).find(key => data[key].email === email);
+                    }
                 }
                 if (foundUser) {
                     currentUser = foundUser;
@@ -1086,7 +1099,7 @@
                     updateUIForUser();
                     showPage('home');
                 } else {
-                    showNotification('بيانات غير صحيحة', 'error');
+                    showNotification('البريد الإلكتروني أو كلمة المرور غير صحيحة', 'error');
                 }
             });
         }
@@ -1109,7 +1122,7 @@
                     emailExists = Object.values(data).some(u => u.email === email);
                 }
                 if (emailExists) {
-                    showNotification('البريد موجود بالفعل', 'error');
+                    showNotification('البريد الإلكتروني موجود بالفعل', 'error');
                     return;
                 }
                 
@@ -1121,9 +1134,11 @@
                     isAdmin: false,
                     createdAt: new Date().toISOString()
                 };
-                saveUserToFirebase(newUser);
-                showNotification('تم إنشاء الحساب بنجاح', 'success');
-                showLoginForm();
+                
+                saveUserToFirebase(newUser, (savedUser) => {
+                    showNotification('تم إنشاء الحساب بنجاح', 'success');
+                    showLoginForm();
+                });
             });
         }
 
@@ -1140,42 +1155,61 @@
             const container = document.getElementById('usersList');
             if (!container) return;
             
-            if (!window.firebaseUsers || window.firebaseUsers.length === 0) {
-                container.innerHTML = '<p>لا توجد حسابات مسجلة</p>';
+            if (!window.allUsers || window.allUsers.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:2rem;">📭 لا توجد حسابات مسجلة حتى الآن</div>';
                 return;
             }
             
-            container.innerHTML = window.firebaseUsers.map(user => `
+            container.innerHTML = window.allUsers.map(user => `
                 <div style="border:1px solid #e0e0e0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
                     <div><strong>${user.name}</strong></div>
                     <div>📧 ${user.email}</div>
                     <div>📞 ${user.phone || 'غير مدخل'}</div>
                     <div>📅 تاريخ التسجيل: ${user.createdAt ? new Date(user.createdAt).toLocaleString('ar-EG') : 'غير محدد'}</div>
-                    <div>${user.isAdmin ? '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;">👑 مدير</span>' : '<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;">👤 مستخدم عادي</span>'}${user.isSuperAdmin ? '<span style="background:#ff4757;color:white;padding:2px 8px;border-radius:10px;margin-right:5px;">⭐ مدير أساسي</span>' : ''}</div>
-                    <div style="margin-top:1rem;">${!user.isSuperAdmin ? (user.isAdmin ? `<button class="btn" onclick="removeUserAdmin('${user.id}')" style="background:#dc3545;width:auto;padding:5px 15px;">❌ إزالة الصلاحيات</button>` : `<button class="btn" onclick="makeUserAdmin('${user.id}')" style="background:#28a745;width:auto;padding:5px 15px;">👑 جعل مديراً</button>`) : ''}</div>
+                    <div>
+                        ${user.isAdmin ? '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;">👑 مدير</span>' : '<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;">👤 مستخدم عادي</span>'}
+                        ${user.isSuperAdmin ? '<span style="background:#ff4757;color:white;padding:2px 8px;border-radius:10px;margin-right:5px;">⭐ مدير أساسي</span>' : ''}
+                    </div>
+                    <div style="margin-top:1rem;">
+                        ${!user.isSuperAdmin ? (user.isAdmin ? 
+                            `<button class="btn" onclick="removeUserAdmin('${user.id}')" style="background:#dc3545;width:auto;padding:5px 15px;">❌ إزالة الصلاحيات</button>` : 
+                            `<button class="btn" onclick="makeUserAdmin('${user.id}')" style="background:#28a745;width:auto;padding:5px 15px;">👑 جعل مديراً</button>`) : 
+                            '<span style="color:#999;">لا يمكن تعديل صلاحيات المدير الأساسي</span>'}
+                    </div>
                 </div>
             `).join('');
         }
 
         function makeUserAdmin(userId) {
             usersRef.child(userId).update({ isAdmin: true });
-            showNotification('تم جعل المستخدم مديراً', 'success');
-            setTimeout(() => displayUsersList(), 500);
+            showNotification('✅ تم جعل المستخدم مديراً', 'success');
+            setTimeout(() => {
+                loadAllUsers();
+                displayUsersList();
+            }, 500);
         }
 
         function removeUserAdmin(userId) {
             usersRef.child(userId).update({ isAdmin: false });
-            showNotification('تم إزالة صلاحيات المدير', 'info');
-            setTimeout(() => displayUsersList(), 500);
+            showNotification('❌ تم إزالة صلاحيات المدير', 'info');
+            setTimeout(() => {
+                loadAllUsers();
+                displayUsersList();
+            }, 500);
         }
 
         function showManageUsersModal() {
-            if (!isAdmin()) return;
+            if (!isAdmin()) {
+                showNotification('غير مصرح! هذه الصفحة للمدير فقط', 'error');
+                return;
+            }
             document.getElementById('usersModal').style.display = 'flex';
             displayUsersList();
         }
 
-        function closeUsersModal() { document.getElementById('usersModal').style.display = 'none'; }
+        function closeUsersModal() { 
+            document.getElementById('usersModal').style.display = 'none'; 
+        }
 
         // ==================== دوال القائمة المنبثقة ====================
         function toggleMobileMenu() {
@@ -1423,7 +1457,17 @@
             container.innerHTML = userOrders.map(order => `<div class="order-card"><div><strong>طلب #${order.id}</strong> - ${order.orderDate}</div><div>📍 ${order.shippingAddress}</div><div>💰 ${order.total.toLocaleString()} ج.م</div><div>💳 ${order.paymentMethod === 'paypal' ? 'باي بال (PayPal) ✅' : 'دفع عند الاستلام'}</div><div>📝 الحالة: <span class="order-status ${order.status === 'paid_pending' ? 'status-paid-pending' : `status-${order.status}`}">${order.status === 'paid_pending' ? '💰 تم الدفع - قيد المراجعة' : order.status === 'pending' ? '⏳ قيد المراجعة' : order.status === 'approved' ? '✓ تم القبول' : order.status === 'shipped' ? '🚚 تم الشحن' : order.status === 'delivered' ? '✅ تم التوصيل' : '✗ مرفوض'}</span></div>${order.adminNote ? `<div>📌 ${order.adminNote}</div>` : ''}${order.shippingNote ? `<div>📌 ${order.shippingNote}</div>` : ''}${order.deliveryNote ? `<div>📌 ${order.deliveryNote}</div>` : ''}<details><summary>تفاصيل المنتجات</summary>${order.items.map(item => `<div>• ${item.name} x ${item.quantity}</div>`).join('')}</details></div>`).join('');
         }
 
-        function showAdminPanel() { if (!isAdmin()) { showNotification('غير مصرح!', 'error'); return; } showPage('admin'); displayAdminProducts(); displayPendingOrders(); displayCompletedOrders(); displayAdminStats(); }
+        function showAdminPanel() { 
+            if (!isAdmin()) { 
+                showNotification('غير مصرح! هذه الصفحة للمدير فقط', 'error'); 
+                return; 
+            } 
+            showPage('admin'); 
+            displayAdminProducts(); 
+            displayPendingOrders(); 
+            displayCompletedOrders(); 
+            displayAdminStats(); 
+        }
         
         function displayAdminStats() {
             const container = document.getElementById('adminStats');
@@ -1455,7 +1499,7 @@
         }
         
         function addToCart(productId, productName, productPrice) { 
-            if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; } 
+            if (!currentUser) { showNotification('الرجاء تسجيل الدخول أولاً', 'error'); showAuthModal(); return; } 
             const product = products.find(p => p.id === productId);
             if (product && product.stock <= 0) { showNotification('المنتج غير متوفر حالياً', 'error'); return; }
             const existingItem = cart.find(item => item.id === productId); 
@@ -1488,7 +1532,7 @@
         
         function proceedToCheckout() { 
             if (cart.length === 0) { showNotification('السلة فارغة', 'error'); return; } 
-            if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; } 
+            if (!currentUser) { showNotification('الرجاء تسجيل الدخول أولاً', 'error'); showAuthModal(); return; } 
             selectedPayment = null;
             paypalConfirmed = false;
             document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
@@ -1537,11 +1581,17 @@
             else if (page === 'cart') { document.getElementById('cartPage').style.display = 'block'; displayCart(); }
             else if (page === 'checkout') { if (cart.length === 0) { showNotification('السلة فارغة', 'error'); showPage('cart'); return; } document.getElementById('checkoutPage').style.display = 'block'; }
             else if (page === 'dashboard') { if (!currentUser) { showNotification('الرجاء تسجيل الدخول', 'error'); showAuthModal(); return; } document.getElementById('dashboardPage').style.display = 'block'; displayUserOrders(); }
-            else if (page === 'admin') { if (!isAdmin()) { showNotification('غير مصرح', 'error'); showPage('home'); return; } document.getElementById('adminPage').style.display = 'block'; }
+            else if (page === 'admin') { if (!isAdmin()) { showNotification('غير مصرح!', 'error'); showPage('home'); return; } document.getElementById('adminPage').style.display = 'block'; }
             closeMobileMenu();
         }
         
-        function showNotification(message, type) { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); setTimeout(() => notification.remove(), 3000); }
+        function showNotification(message, type) { 
+            const notification = document.createElement('div'); 
+            notification.className = `notification ${type}`; 
+            notification.textContent = message; 
+            document.body.appendChild(notification); 
+            setTimeout(() => notification.remove(), 3000); 
+        }
         
         // استعادة الجلسة السابقة
         const savedUser = localStorage.getItem('currentUser');
@@ -1552,7 +1602,7 @@
         // بدء التطبيق
         initializeAdmin();
         loadProductsFromFirebase();
-        loadUsersFromFirebase();
+        loadAllUsers();
         updateCartCount();
         updateUIForUser();
         showPage('home');
