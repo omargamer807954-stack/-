@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>مشترياتي - نظام متكامل للبيع والشراء</title>
     
-    <!-- Firebase SDK (الإصدار القديم المتوافق) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     
@@ -587,8 +587,9 @@
                     <span class="cart-count" id="cartCountDesktop">0</span>
                 </div>
                 <a id="adminPanelLink" onclick="showAdminPanel()" style="display:none;">👑 لوحة المدير</a>
-                <a id="authLink" onclick="showAuthModal()">دخول / تسجيل</a>
-                <a id="logoutLink" onclick="logout()" style="display:none;">تسجيل خروج</a>
+                <a id="authLink" onclick="showAuthModal()">🔐 دخول</a>
+                <a id="logoutLink" onclick="logout()" style="display:none;">🚪 تسجيل خروج</a>
+                <span id="userNameDisplay" style="display:none; color:#667eea; font-weight:bold;"></span>
             </div>
         </nav>
     </div>
@@ -599,8 +600,9 @@
         <a onclick="closeMobileMenuAndShowPage('dashboard')">📋 طلباتي</a>
         <a onclick="closeMobileMenuAndShowPage('cart')">🛒 السلة</a>
         <a id="adminPanelLinkMobile" onclick="closeMobileMenuAndShowAdminPanel()" style="display:none;">👑 لوحة المدير</a>
-        <a id="authLinkMobile" onclick="closeMobileMenuAndShowAuthModal()">🔐 دخول / تسجيل</a>
+        <a id="authLinkMobile" onclick="closeMobileMenuAndShowAuthModal()">🔐 دخول</a>
         <a id="logoutLinkMobile" onclick="closeMobileMenuAndLogout()" style="display:none;">🚪 تسجيل خروج</a>
+        <span id="userNameDisplayMobile" style="display:none; padding:1rem 2rem; color:#667eea; font-weight:bold; border-bottom:1px solid #f0f0f0;"></span>
     </div>
     
     <div class="menu-overlay" id="menuOverlay" onclick="closeMobileMenu()"></div>
@@ -838,7 +840,6 @@
 
     <script>
         // ==================== إعدادات Firebase ====================
-        // 🔴 ده الـ config بتاعك - حطه هنا 🔴
         const firebaseConfig = {
             apiKey: "AIzaSyC4hHIIFAuIUfSy98OfqOR6rteaktz-VSY",
             authDomain: "myshop-14f4f.firebaseapp.com",
@@ -853,17 +854,32 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const productsRef = database.ref('products');
+        const usersRef = database.ref('users');
 
         // ==================== البيانات الأساسية ====================
         let products = [];
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        let users = JSON.parse(localStorage.getItem('users')) || [];
         let orders = JSON.parse(localStorage.getItem('orders')) || [];
-        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let currentUser = null;
         let editingProductId = null;
         let selectedPayment = null;
         let currentImageData = null;
         let paypalConfirmed = false;
+
+        // ==================== تحميل المستخدمين من Firebase ====================
+        function loadUsersFromFirebase() {
+            usersRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                // المستخدمين بيتخزنوا في متغير عالمي بس هنستخدمهم في لوحة المدير
+                window.firebaseUsers = data ? Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key]
+                })) : [];
+                if (isAdmin() && document.getElementById('usersList').style.display !== 'none') {
+                    displayUsersList();
+                }
+            });
+        }
 
         // ==================== تحميل المنتجات من Firebase ====================
         function loadProductsFromFirebase() {
@@ -880,31 +896,35 @@
                 displayProducts(products, 'allProducts');
                 displayProducts(products.slice(0, 4), 'featuredProducts');
                 if (isAdmin()) displayAdminProducts();
-                showNotification('تم تحديث المنتجات من السحابة', 'info');
             });
         }
 
-        // ==================== حفظ منتج في Firebase ====================
+        // ==================== حفظ مستخدم في Firebase ====================
+        function saveUserToFirebase(user) {
+            const newUserRef = usersRef.push();
+            user.id = newUserRef.key;
+            newUserRef.set(user);
+            return user;
+        }
+
+        // ==================== دوال المنتجات ====================
         function saveProductToFirebase(product) {
             const newProductRef = productsRef.push();
             product.id = newProductRef.key;
             newProductRef.set(product);
-            showNotification('تم إضافة المنتج إلى السحابة', 'success');
+            showNotification('✅ تم إضافة المنتج إلى السحابة', 'success');
         }
 
-        // ==================== تحديث منتج في Firebase ====================
         function updateProductInFirebase(productId, productData) {
             productsRef.child(productId).update(productData);
-            showNotification('تم تحديث المنتج في السحابة', 'success');
+            showNotification('✅ تم تحديث المنتج في السحابة', 'success');
         }
 
-        // ==================== حذف منتج من Firebase ====================
         function deleteProductFromFirebase(productId) {
             productsRef.child(productId).remove();
-            showNotification('تم حذف المنتج من السحابة', 'info');
+            showNotification('🗑️ تم حذف المنتج من السحابة', 'info');
         }
 
-        // ==================== دوال المنتجات ====================
         function saveProduct() {
             if (!isAdmin()) return;
             const productData = {
@@ -984,6 +1004,179 @@
             document.getElementById('productModal').style.display = 'flex';
         }
 
+        // ==================== دوال المستخدمين (مع Firebase) ====================
+        function isAdmin() { 
+            return currentUser && currentUser.isAdmin === true; 
+        }
+
+        function updateUIForUser() {
+            const authLink = document.getElementById('authLink');
+            const logoutLink = document.getElementById('logoutLink');
+            const authLinkMobile = document.getElementById('authLinkMobile');
+            const logoutLinkMobile = document.getElementById('logoutLinkMobile');
+            const adminLink = document.getElementById('adminPanelLink');
+            const adminLinkMobile = document.getElementById('adminPanelLinkMobile');
+            const userNameDisplay = document.getElementById('userNameDisplay');
+            const userNameDisplayMobile = document.getElementById('userNameDisplayMobile');
+
+            if (currentUser) {
+                if (authLink) authLink.style.display = 'none';
+                if (logoutLink) logoutLink.style.display = 'inline';
+                if (authLinkMobile) authLinkMobile.style.display = 'none';
+                if (logoutLinkMobile) logoutLinkMobile.style.display = 'block';
+                if (userNameDisplay) {
+                    userNameDisplay.style.display = 'inline';
+                    userNameDisplay.textContent = `👤 ${currentUser.name}`;
+                }
+                if (userNameDisplayMobile) {
+                    userNameDisplayMobile.style.display = 'block';
+                    userNameDisplayMobile.textContent = `👤 ${currentUser.name}`;
+                }
+                if (adminLink) adminLink.style.display = currentUser.isAdmin ? 'inline' : 'none';
+                if (adminLinkMobile) adminLinkMobile.style.display = currentUser.isAdmin ? 'block' : 'none';
+            } else {
+                if (authLink) authLink.style.display = 'inline';
+                if (logoutLink) logoutLink.style.display = 'none';
+                if (authLinkMobile) authLinkMobile.style.display = 'block';
+                if (logoutLinkMobile) logoutLinkMobile.style.display = 'none';
+                if (userNameDisplay) userNameDisplay.style.display = 'none';
+                if (userNameDisplayMobile) userNameDisplayMobile.style.display = 'none';
+                if (adminLink) adminLink.style.display = 'none';
+                if (adminLinkMobile) adminLinkMobile.style.display = 'none';
+            }
+        }
+
+        function initializeAdmin() {
+            usersRef.once('value', (snapshot) => {
+                const data = snapshot.val();
+                let adminExists = false;
+                if (data) {
+                    adminExists = Object.values(data).some(u => u.email === 'admin@mashryati.com');
+                }
+                if (!adminExists) {
+                    const adminUser = {
+                        name: "المدير العام",
+                        email: "admin@mashryati.com",
+                        phone: "01000000000",
+                        password: "admin123",
+                        isAdmin: true,
+                        isSuperAdmin: true
+                    };
+                    saveUserToFirebase(adminUser);
+                }
+            });
+        }
+
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            usersRef.once('value', (snapshot) => {
+                const data = snapshot.val();
+                let foundUser = null;
+                if (data) {
+                    const usersList = Object.values(data);
+                    foundUser = usersList.find(u => u.email === email && u.password === password);
+                }
+                if (foundUser) {
+                    currentUser = foundUser;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    closeAuthModal();
+                    showNotification(`مرحباً ${foundUser.name}`, 'success');
+                    updateUIForUser();
+                    showPage('home');
+                } else {
+                    showNotification('بيانات غير صحيحة', 'error');
+                }
+            });
+        }
+
+        function register() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const phone = document.getElementById('regPhone').value;
+            const password = document.getElementById('regPassword').value;
+            
+            if (!name || !email || !phone || !password) {
+                showNotification('املأ جميع الحقول', 'error');
+                return;
+            }
+            
+            usersRef.once('value', (snapshot) => {
+                const data = snapshot.val();
+                let emailExists = false;
+                if (data) {
+                    emailExists = Object.values(data).some(u => u.email === email);
+                }
+                if (emailExists) {
+                    showNotification('البريد موجود بالفعل', 'error');
+                    return;
+                }
+                
+                const newUser = {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    password: password,
+                    isAdmin: false,
+                    createdAt: new Date().toISOString()
+                };
+                saveUserToFirebase(newUser);
+                showNotification('تم إنشاء الحساب بنجاح', 'success');
+                showLoginForm();
+            });
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateUIForUser();
+            showNotification('تم تسجيل الخروج', 'info');
+            showPage('home');
+        }
+
+        // ==================== عرض المستخدمين للمدير ====================
+        function displayUsersList() {
+            const container = document.getElementById('usersList');
+            if (!container) return;
+            
+            if (!window.firebaseUsers || window.firebaseUsers.length === 0) {
+                container.innerHTML = '<p>لا توجد حسابات مسجلة</p>';
+                return;
+            }
+            
+            container.innerHTML = window.firebaseUsers.map(user => `
+                <div style="border:1px solid #e0e0e0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
+                    <div><strong>${user.name}</strong></div>
+                    <div>📧 ${user.email}</div>
+                    <div>📞 ${user.phone || 'غير مدخل'}</div>
+                    <div>📅 تاريخ التسجيل: ${user.createdAt ? new Date(user.createdAt).toLocaleString('ar-EG') : 'غير محدد'}</div>
+                    <div>${user.isAdmin ? '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;">👑 مدير</span>' : '<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;">👤 مستخدم عادي</span>'}${user.isSuperAdmin ? '<span style="background:#ff4757;color:white;padding:2px 8px;border-radius:10px;margin-right:5px;">⭐ مدير أساسي</span>' : ''}</div>
+                    <div style="margin-top:1rem;">${!user.isSuperAdmin ? (user.isAdmin ? `<button class="btn" onclick="removeUserAdmin('${user.id}')" style="background:#dc3545;width:auto;padding:5px 15px;">❌ إزالة الصلاحيات</button>` : `<button class="btn" onclick="makeUserAdmin('${user.id}')" style="background:#28a745;width:auto;padding:5px 15px;">👑 جعل مديراً</button>`) : ''}</div>
+                </div>
+            `).join('');
+        }
+
+        function makeUserAdmin(userId) {
+            usersRef.child(userId).update({ isAdmin: true });
+            showNotification('تم جعل المستخدم مديراً', 'success');
+            setTimeout(() => displayUsersList(), 500);
+        }
+
+        function removeUserAdmin(userId) {
+            usersRef.child(userId).update({ isAdmin: false });
+            showNotification('تم إزالة صلاحيات المدير', 'info');
+            setTimeout(() => displayUsersList(), 500);
+        }
+
+        function showManageUsersModal() {
+            if (!isAdmin()) return;
+            document.getElementById('usersModal').style.display = 'flex';
+            displayUsersList();
+        }
+
+        function closeUsersModal() { document.getElementById('usersModal').style.display = 'none'; }
+
         // ==================== دوال القائمة المنبثقة ====================
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
@@ -1017,32 +1210,6 @@
         function closeMobileMenuAndLogout() {
             closeMobileMenu();
             logout();
-        }
-        
-        function updateMobileAdminLinks() {
-            const adminLinkMobile = document.getElementById('adminPanelLinkMobile');
-            const authLinkMobile = document.getElementById('authLinkMobile');
-            const logoutLinkMobile = document.getElementById('logoutLinkMobile');
-            
-            if (adminLinkMobile) adminLinkMobile.style.display = isAdmin() ? 'block' : 'none';
-            
-            if (currentUser) {
-                if (authLinkMobile) authLinkMobile.style.display = 'none';
-                if (logoutLinkMobile) logoutLinkMobile.style.display = 'block';
-            } else {
-                if (authLinkMobile) authLinkMobile.style.display = 'block';
-                if (logoutLinkMobile) logoutLinkMobile.style.display = 'none';
-            }
-        }
-
-        function isAdmin() { return currentUser && currentUser.isAdmin === true; }
-
-        function initializeAdmin() {
-            const adminExists = users.find(u => u.email === 'admin@mashryati.com');
-            if (!adminExists) {
-                users.push({ id: 999, name: "المدير العام", email: "admin@mashryati.com", phone: "01000000000", password: "admin123", isAdmin: true, isSuperAdmin: true });
-                localStorage.setItem('users', JSON.stringify(users));
-            }
         }
 
         // ==================== دوال العرض ====================
@@ -1125,37 +1292,6 @@
             `).join('') + '</div>';
         }
 
-        // ==================== دوال المستخدمين ====================
-        function makeUserAdmin(userId) {
-            const user = users.find(u => u.id === userId);
-            if (user && !user.isSuperAdmin) { user.isAdmin = true; localStorage.setItem('users', JSON.stringify(users)); if (currentUser && currentUser.id === userId) { currentUser.isAdmin = true; localStorage.setItem('currentUser', JSON.stringify(currentUser)); updateUIForAdmin(); } showNotification(`تم جعل ${user.name} مديراً`, 'success'); if (document.getElementById('usersList')) displayUsersList(); }
-        }
-
-        function removeUserAdmin(userId) {
-            const user = users.find(u => u.id === userId);
-            if (user && !user.isSuperAdmin) { user.isAdmin = false; localStorage.setItem('users', JSON.stringify(users)); if (currentUser && currentUser.id === userId) { currentUser.isAdmin = false; localStorage.setItem('currentUser', JSON.stringify(currentUser)); updateUIForAdmin(); } showNotification(`تم إزالة صلاحيات المدير`, 'info'); if (document.getElementById('usersList')) displayUsersList(); }
-        }
-
-        function showManageUsersModal() { if (!isAdmin()) return; document.getElementById('usersModal').style.display = 'flex'; displayUsersList(); }
-
-        function displayUsersList() {
-            const container = document.getElementById('usersList');
-            if (!container) return;
-            container.innerHTML = users.map(user => `<div style="border:1px solid #e0e0e0;border-radius:10px;padding:1rem;margin-bottom:1rem;">
-                <div><strong>${user.name}</strong></div><div>📧 ${user.email}</div><div>📞 ${user.phone}</div>
-                <div>${user.isAdmin ? '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;">👑 مدير</span>' : '<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;">👤 مستخدم</span>'}${user.isSuperAdmin ? '<span style="background:#ff4757;color:white;padding:2px 8px;border-radius:10px;margin-right:5px;">⭐ مدير أساسي</span>' : ''}</div>
-                <div style="margin-top:1rem;">${!user.isSuperAdmin ? (user.isAdmin ? `<button class="btn" onclick="removeUserAdmin(${user.id})" style="background:#dc3545;width:auto;padding:5px 15px;">❌ إزالة الصلاحيات</button>` : `<button class="btn" onclick="makeUserAdmin(${user.id})" style="background:#28a745;width:auto;padding:5px 15px;">👑 جعل مديراً</button>`) : ''}</div>
-            </div>`).join('');
-        }
-
-        function closeUsersModal() { document.getElementById('usersModal').style.display = 'none'; }
-        
-        function updateUIForAdmin() { 
-            const adminLink = document.getElementById('adminPanelLink'); 
-            if (adminLink) adminLink.style.display = isAdmin() ? 'inline' : 'none';
-            updateMobileAdminLinks();
-        }
-
         // ==================== دوال الطلبات ====================
         function approveOrder(orderId) { 
             const order = orders.find(o => o.id === orderId); 
@@ -1211,7 +1347,7 @@
                 return false;
             }
             paypalConfirmed = true;
-            showNotification('✅ تم تأكيد الدفع عبر PayPal بنجاح! الطلب الآن "تم الدفع - قيد المراجعة"', 'success');
+            showNotification('✅ تم تأكيد الدفع عبر PayPal بنجاح!', 'success');
             return true;
         }
 
@@ -1383,20 +1519,6 @@
             if (method !== 'paypal') paypalConfirmed = false;
         }
         
-        function login() { 
-            const email = document.getElementById('loginEmail').value, password = document.getElementById('loginPassword').value, user = users.find(u => u.email === email && u.password === password); 
-            if (user) { currentUser = user; localStorage.setItem('currentUser', JSON.stringify(currentUser)); closeAuthModal(); showNotification(`مرحباً ${user.name}`, 'success'); updateUIForAdmin(); showPage('home'); } 
-            else showNotification('بيانات غير صحيحة', 'error'); 
-        }
-        
-        function register() { 
-            const name = document.getElementById('regName').value, email = document.getElementById('regEmail').value, phone = document.getElementById('regPhone').value, password = document.getElementById('regPassword').value; 
-            if (!name || !email || !phone || !password) { showNotification('املأ جميع الحقول', 'error'); return; } 
-            if (users.find(u => u.email === email)) { showNotification('البريد موجود', 'error'); return; } 
-            users.push({ id: users.length + 1, name, email, phone, password, isAdmin: false }); localStorage.setItem('users', JSON.stringify(users)); showNotification('تم إنشاء الحساب', 'success'); showLoginForm(); 
-        }
-        
-        function logout() { currentUser = null; localStorage.removeItem('currentUser'); updateUIForAdmin(); showNotification('تم تسجيل الخروج', 'info'); showPage('home'); }
         function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; showLoginForm(); }
         function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
         function showLoginForm() { document.getElementById('loginFormDiv').style.display = 'block'; document.getElementById('registerFormDiv').style.display = 'none'; }
@@ -1421,11 +1543,18 @@
         
         function showNotification(message, type) { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); setTimeout(() => notification.remove(), 3000); }
         
+        // استعادة الجلسة السابقة
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+        }
+        
         // بدء التطبيق
         initializeAdmin();
         loadProductsFromFirebase();
+        loadUsersFromFirebase();
         updateCartCount();
-        updateUIForAdmin();
+        updateUIForUser();
         showPage('home');
     </script>
 </body>
