@@ -878,7 +878,6 @@
                 } else {
                     window.allUsers = [];
                 }
-                // لو المدير شايف صفحة المستخدمين، يحدث العرض
                 if (isAdmin() && document.getElementById('usersModal').style.display === 'flex') {
                     displayUsersList();
                 }
@@ -915,7 +914,7 @@
             });
         }
 
-        // ==================== دوال المنتجات ====================
+        // ==================== دوال المنتجات (مع تعديل السعر) ====================
         function saveProductToFirebase(product) {
             const newProductRef = productsRef.push();
             product.id = newProductRef.key;
@@ -924,8 +923,13 @@
         }
 
         function updateProductInFirebase(productId, productData) {
-            productsRef.child(productId).update(productData);
-            showNotification('✅ تم تحديث المنتج في السحابة', 'success');
+            // ده اللي بينفذ التعديل فعلاً
+            productsRef.child(productId).update(productData).then(() => {
+                showNotification('✅ تم تحديث المنتج بنجاح', 'success');
+            }).catch((error) => {
+                showNotification('❌ حدث خطأ في التحديث', 'error');
+                console.error(error);
+            });
         }
 
         function deleteProductFromFirebase(productId) {
@@ -935,6 +939,7 @@
 
         function saveProduct() {
             if (!isAdmin()) return;
+            
             const productData = {
                 name: document.getElementById('productName').value,
                 description: document.getElementById('productDescription').value,
@@ -946,15 +951,19 @@
                 ageRange: document.getElementById('ageRange').value,
                 warnings: document.getElementById('warnings').value,
                 imageData: currentImageData || null,
-                createdAt: new Date().toISOString()
+                updatedAt: new Date().toISOString()
             };
+            
             if (!productData.name || !productData.price) {
                 showNotification('الرجاء إدخال اسم المنتج والسعر', 'error');
                 return;
             }
+            
             if (editingProductId) {
+                // تعديل منتج موجود
                 updateProductInFirebase(editingProductId, productData);
             } else {
+                // إضافة منتج جديد
                 saveProductToFirebase(productData);
             }
             closeProductModal();
@@ -988,22 +997,31 @@
         function editProduct(id) {
             if (!isAdmin()) return;
             const product = products.find(p => p.id === id);
-            if (!product) return;
+            if (!product) {
+                showNotification('المنتج غير موجود', 'error');
+                return;
+            }
+            
             editingProductId = id;
             currentImageData = product.imageData || null;
+            
             document.getElementById('productModalTitle').innerText = 'تعديل المنتج';
-            document.getElementById('productName').value = product.name;
-            document.getElementById('productDescription').value = product.description;
-            document.getElementById('productPrice').value = product.price;
-            document.getElementById('productStock').value = product.stock;
+            document.getElementById('productName').value = product.name || '';
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productPrice').value = product.price || '';
+            document.getElementById('productStock').value = product.stock || 0;
             document.getElementById('priceRange').value = product.priceRange || 'medium';
             document.getElementById('productType').value = product.productType || 'other';
             document.getElementById('targetGroup').value = product.targetGroup || 'all';
             document.getElementById('ageRange').value = product.ageRange || 'all';
             document.getElementById('warnings').value = product.warnings || '';
+            
             if (currentImageData) {
                 document.getElementById('imagePreviewContainer').innerHTML = `<img src="${currentImageData}" class="image-preview">`;
+            } else {
+                document.getElementById('imagePreviewContainer').innerHTML = '';
             }
+            
             document.getElementById('productModal').style.display = 'flex';
         }
 
